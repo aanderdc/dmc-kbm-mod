@@ -1,0 +1,9 @@
+# Build artifacts & local runtime config
+*.pdb
+*.user
+*.suo
+bin/
+obj/
+.vs/
+dmc_kbm_config.ini
+DMC_KBM_Mod.exe
