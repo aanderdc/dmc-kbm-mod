@@ -124,7 +124,7 @@ namespace DmcKbmMod
             _toast = new OverlayToast();
             _lastTesterAction = Localization.T("Move mouse or press keys inside the box", "Mueve el ratón o pulsa teclas dentro del recuadro");
 
-            Text = "DMC KBM Mod — DMC4 / DMC4SE & DMC HD Collection";
+            Text = "DMC KBM Mod — DMC4 / DMC4SE, DMC HD Collection & DmC";
             Size = new Size(900, 710);
             MinimumSize = new Size(840, 640);
             StartPosition = FormStartPosition.CenterScreen;
@@ -878,9 +878,9 @@ namespace DmcKbmMod
                 GameAction capAct = action;
                 btnKey.Click += (s, e) =>
                 {
-                    btnKey.Text = Localization.T("[ Press game key... ]", "[ Pulsa tecla del juego... ]");
+                    btnKey.Text = Localization.T("[ Press key or mouse... ]", "[ Pulsa tecla o ratón... ]");
                     btnKey.BackColor = AccentBlue;
-                    _engine.StartBindCapture(false, (code, cancelled) => SafeInvoke(() =>
+                    _engine.StartBindCapture(true, (code, cancelled) => SafeInvoke(() =>
                     {
                         if (!cancelled)
                         {
@@ -891,11 +891,20 @@ namespace DmcKbmMod
                     }));
                 };
 
-                bool ext;
-                ushort scan = ModConfig.IsKeyboardCode(currentKey) ? NativeInput.GetScanCode((ushort)currentKey, out ext) : (ushort)0;
+                string scanText = "—";
+                if (ModConfig.IsKeyboardCode(currentKey))
+                {
+                    bool ext;
+                    ushort scan = NativeInput.GetScanCode((ushort)currentKey, out ext);
+                    if (scan != 0) scanText = string.Format("DirectInput ScanCode: 0x{0:X2}", scan);
+                }
+                else if (ModConfig.IsMouseCode(currentKey))
+                {
+                    scanText = Localization.T("Native Mouse Button", "Botón de Ratón Nativo");
+                }
                 var lblScan = new Label
                 {
-                    Text = scan != 0 ? string.Format("DirectInput ScanCode: 0x{0:X2}", scan) : "—",
+                    Text = scanText,
                     ForeColor = TextMuted,
                     Font = new Font("Consolas", 8.5f),
                     Location = new Point(595, 8),
@@ -1118,8 +1127,8 @@ namespace DmcKbmMod
             {
                 _lblStatusDot.ForeColor = AccentAmber;
                 _lblStatusText.Text = Localization.T(
-                    "Waiting — Launch DMC4, DMC4SE or DMC HD Collection (DMC1/2/3)",
-                    "En espera — Abre DMC4, DMC4SE o DMC HD Collection (DMC1/2/3)");
+                    "Waiting — Launch DMC4/SE, DMC HD Collection (DMC1/2/3) or DmC (2013)",
+                    "En espera — Abre DMC4/SE, DMC HD Collection (DMC1/2/3) o DmC (2013)");
                 _btnMasterToggle.Text = Localization.T("MOD: ACTIVE (F1)", "MOD: ACTIVO (F1)");
                 _btnMasterToggle.BackColor = AccentGreen;
             }

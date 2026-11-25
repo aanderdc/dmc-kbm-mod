@@ -35,10 +35,20 @@ namespace DmcKbmMod
         public const int XBUTTON1 = 0x0001;
         public const int XBUTTON2 = 0x0002;
 
+        public const uint INPUT_MOUSE = 0;
         public const uint INPUT_KEYBOARD = 1;
         public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint KEYEVENTF_SCANCODE = 0x0008;
+
+        public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+        public const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        public const uint MOUSEEVENTF_RIGHTUP = 0x0010;
+        public const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+        public const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+        public const uint MOUSEEVENTF_XDOWN = 0x0080;
+        public const uint MOUSEEVENTF_XUP = 0x0100;
 
         public const uint MAPVK_VK_TO_VSC = 0;
 
@@ -427,6 +437,53 @@ namespace DmcKbmMod
             inputs[0].U.ki.dwExtraInfo = INJECTED_SIGNATURE;
 
             SendInput(1, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        public static void SendMouseButton(InputCode mouseCode, bool isDown)
+        {
+            uint flags = 0;
+            uint data = 0;
+            switch (mouseCode)
+            {
+                case InputCode.MouseLeft:
+                    flags = isDown ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
+                    break;
+                case InputCode.MouseRight:
+                    flags = isDown ? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_RIGHTUP;
+                    break;
+                case InputCode.MouseMiddle:
+                    flags = isDown ? MOUSEEVENTF_MIDDLEDOWN : MOUSEEVENTF_MIDDLEUP;
+                    break;
+                case InputCode.MouseX1:
+                    flags = isDown ? MOUSEEVENTF_XDOWN : MOUSEEVENTF_XUP;
+                    data = XBUTTON1;
+                    break;
+                case InputCode.MouseX2:
+                    flags = isDown ? MOUSEEVENTF_XDOWN : MOUSEEVENTF_XUP;
+                    data = XBUTTON2;
+                    break;
+                default:
+                    return;
+            }
+
+            INPUT[] inputs = new INPUT[1];
+            inputs[0].type = INPUT_MOUSE;
+            inputs[0].U.mi.dx = 0;
+            inputs[0].U.mi.dy = 0;
+            inputs[0].U.mi.mouseData = data;
+            inputs[0].U.mi.dwFlags = flags;
+            inputs[0].U.mi.time = 0;
+            inputs[0].U.mi.dwExtraInfo = INJECTED_SIGNATURE;
+
+            SendInput(1, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        public static void SendTargetInput(InputCode target, bool isDown)
+        {
+            if (ModConfig.IsKeyboardCode(target))
+                SendScanKey((ushort)target, isDown);
+            else if (ModConfig.IsMouseCode(target))
+                SendMouseButton(target, isDown);
         }
     }
 }

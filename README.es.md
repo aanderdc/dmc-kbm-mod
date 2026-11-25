@@ -1,8 +1,8 @@
-# DMC KBM Mod (DMC4 / DMC4SE & DMC HD Collection)
+# DMC KBM Mod (DMC4 / DMC4SE, DMC HD Collection y DmC)
 
 > 🌐 **Idioma:** [English](README.md) | **Español**
 
-Mod ligero y portable de **Teclado y Ratón (KBM)** para **Devil May Cry 4**, **Devil May Cry 4 Special Edition** y **Devil May Cry HD Collection (DMC1, DMC2 y DMC3)** en Windows.
+Mod ligero y portable de **Teclado y Ratón (KBM)** para **Devil May Cry 4**, **Devil May Cry 4 Special Edition**, **Devil May Cry HD Collection (DMC1, DMC2 y DMC3)** y **DmC: Devil May Cry (2013)** en Windows.
 
 Funciona en segundo plano sin modificar ni sobrescribir ningún archivo de los juegos, por lo que es **100% compatible** con mods basados en `dinput8.dll` como **DDMK**, **DMC3 Crimson**, **dmc4_hook** y **LauncherFix**.
 
@@ -14,6 +14,7 @@ Funciona en segundo plano sin modificar ni sobrescribir ningún archivo de los j
   - `DevilMayCry4SpecialEdition.exe` (DMC4 SE)
   - `DevilMayCry4_DX9.exe` / `DevilMayCry4_DX10.exe` (DMC4 2008)
   - `dmc1.exe`, `dmc2.exe`, `dmc3.exe` (DMC HD Collection — deja libre `dmcLauncher.exe` para usar el ratón normal en el selector)
+  - `DMC-DevilMayCry.exe` (DmC: Devil May Cry 2013 — mantiene su cámara nativa por ratón mientras unifica el switch Estilo DMC5 / Clásico)
 - **Switch instantáneo entre 2 esquemas de controles** (desde la ventana, desde la bandeja del sistema o en plena partida con **`F2`**):
   - **Estilo DMC5**: `Clic Izq` Espada · `Clic Der` Estilo/Buster · `Botón Lateral 4 / Clic Medio` Pistola
   - **Estilo Clásico**: `Clic Izq` Espada · `Clic Der` Pistola · `Botón Lateral 4 / Clic Medio` Estilo/Buster
@@ -29,20 +30,20 @@ Funciona en segundo plano sin modificar ni sobrescribir ningún archivo de los j
 
 Movimiento (`W, A, S, D`) y Estilos de Dante (`1, 2, 3, 4` en DMC4 / DDMK) funcionan de forma nativa.
 
-| Acción | Estilo DMC5 | Estilo Clásico | Tecla enviada (DMC4 / SE) | Tecla enviada (DMC1/2/3 HDC) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Espada / Melee** | `Clic Izq` | `Clic Izq` | `I` | `I` |
-| **Estilo / Devil Bringer / Acción** | `Clic Der` | `Ratón Lat. 4` / `Clic Medio` | `L` | `L` |
-| **Pistola / Disparo** | `Ratón Lat. 4` / `Clic Medio` | `Clic Der` | `J` | `J` |
-| **Saltar** | `Espacio` | `Espacio` | `K` | `K` |
-| **Fijar Objetivo (Lock-On)** | `Shift Izq` | `Shift Izq` | `Espacio` | `Espacio` |
-| **Devil Trigger** | `F` | `F` | `N` | `F` |
-| **Cambiar Pistola / Exceed** | `Q` / `Rueda Arriba` | `Q` / `Rueda Arriba` | `Q` | `Q` |
-| **Cambiar Arma Melee** | `E` / `Rueda Abajo` | `E` / `Rueda Abajo` | `E` | `E` |
-| **Centrar Cámara** | `Ratón Lat. 5` / `R` | `Ratón Lat. 5` / `R` | `P` | `C` |
-| **Cambiar Objetivo** | `Tab` / `C` | `Tab` / `C` | `O` | `O` |
-| **Burla (Taunt)** | `V` | `V` | `M` | `M` |
-| **Mover Cámara** | `Ratón` | `Ratón` | `Flechas` | `Flechas` (solo H en DMC3 por defecto) |
+| Acción | Estilo DMC5 | Estilo Clásico | DMC4 / SE | DMC1/2/3 HDC | DmC (2013) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Espada / Melee** | `Clic Izq` | `Clic Izq` | `I` | `I` | `LMB` (nativo) |
+| **Estilo / Buster / Especial** | `Clic Der` | `Ratón Lat. 4` / `Clic Medio` | `L` | `L` | `F` (Especial/Lanzar) |
+| **Pistola / Disparo** | `Ratón Lat. 4` / `Clic Medio` | `Clic Der` | `J` | `J` | `RMB` |
+| **Saltar** | `Espacio` | `Espacio` | `K` | `K` | `Espacio` (nativo) |
+| **Lock-On / Esquivar (DmC)** | `Shift Izq` | `Shift Izq` | `Espacio` | `Espacio` | `Shift Izq` (nativo) |
+| **Devil Trigger** | `F` | `F` | `N` | `F` | `V` |
+| **Pistola / Exceed / Ángel** | `Q` / `Rueda Arriba` | `Q` / `Rueda Arriba` | `Q` | `Q` | `Q` (Modo Ángel) |
+| **Arma Melee / Demonio** | `E` / `Rueda Abajo` | `E` / `Rueda Abajo` | `E` | `E` | `E` (Modo Demonio) |
+| **Centrar Cámara** | `Ratón Lat. 5` / `R` | `Ratón Lat. 5` / `R` | `P` | `C` | `C` |
+| **Cambiar Objetivo** | `Tab` / `C` | `Tab` / `C` | `O` | `O` | `Tab` |
+| **Burla (Taunt)** | `V` | `V` | `M` | `M` | `T` |
+| **Mover Cámara** | `Ratón` | `Ratón` | `Flechas` | `Flechas` (H en DMC3) | Ratón nativo |
 
 > Todos los controles de ambos esquemas y las teclas internas de cada juego se pueden reasignar desde la interfaz o editando `dmc_kbm_config.ini`.
 

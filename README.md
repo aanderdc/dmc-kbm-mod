@@ -1,8 +1,8 @@
-# DMC KBM Mod (DMC4 / DMC4SE & DMC HD Collection)
+# DMC KBM Mod (DMC4 / DMC4SE, DMC HD Collection & DmC)
 
 > 🌐 **Language:** **English** | [Español](README.es.md)
 
-Lightweight, portable **Keyboard & Mouse (KBM)** mod for **Devil May Cry 4**, **Devil May Cry 4 Special Edition**, and **Devil May Cry HD Collection (DMC1, DMC2, and DMC3)** on Windows.
+Lightweight, portable **Keyboard & Mouse (KBM)** mod for **Devil May Cry 4**, **Devil May Cry 4 Special Edition**, **Devil May Cry HD Collection (DMC1, DMC2, and DMC3)**, and **DmC: Devil May Cry (2013)** on Windows.
 
 Runs cleanly in the background without touching or overwriting any game files, making it **100% compatible** with `dinput8.dll` mods such as **DDMK**, **DMC3 Crimson**, **dmc4_hook**, and **LauncherFix**.
 
@@ -14,6 +14,7 @@ Runs cleanly in the background without touching or overwriting any game files, m
   - `DevilMayCry4SpecialEdition.exe` (DMC4 SE)
   - `DevilMayCry4_DX9.exe` / `DevilMayCry4_DX10.exe` (DMC4 2008)
   - `dmc1.exe`, `dmc2.exe`, `dmc3.exe` (DMC HD Collection — leaves `dmcLauncher.exe` untouched so mouse clicks work normally in the launcher)
+  - `DMC-DevilMayCry.exe` (DmC: Devil May Cry 2013 — keeps native PC mouse camera intact while unifying DMC5 / Classic button presets)
 - **Instant toggle between 2 control presets** (from the app UI, system tray, or in-game with **`F2`**):
   - **DMC5 Style**: `LMB` Sword · `RMB` Style/Buster · `Mouse Side 4 / MMB` Gun
   - **Classic Style**: `LMB` Sword · `RMB` Gun · `Mouse Side 4 / MMB` Style/Buster
@@ -29,20 +30,20 @@ Runs cleanly in the background without touching or overwriting any game files, m
 
 Movement (`W, A, S, D`) and Dante's Styles (`1, 2, 3, 4` in DMC4 / DDMK) pass through natively.
 
-| Action | DMC5 Style | Classic Style | Sent Key (DMC4 / SE) | Sent Key (DMC1/2/3 HDC) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Sword / Melee Attack** | `Left Click (LMB)` | `Left Click (LMB)` | `I` | `I` |
-| **Style / Devil Bringer / Action** | `Right Click (RMB)` | `Mouse Side 4` / `MMB` | `L` | `L` |
-| **Gun / Shoot** | `Mouse Side 4` / `MMB` | `Right Click (RMB)` | `J` | `J` |
-| **Jump** | `Space` | `Space` | `K` | `K` |
-| **Lock-On** | `Left Shift` | `Left Shift` | `Space` | `Space` |
-| **Devil Trigger** | `F` | `F` | `N` | `F` |
-| **Switch Gun / Exceed** | `Q` / `Wheel Up` | `Q` / `Wheel Up` | `Q` | `Q` |
-| **Switch Melee Weapon** | `E` / `Wheel Down` | `E` / `Wheel Down` | `E` | `E` |
-| **Center Camera** | `Mouse Side 5` / `R` | `Mouse Side 5` / `R` | `P` | `C` |
-| **Switch Target** | `Tab` / `C` | `Tab` / `C` | `O` | `O` |
-| **Taunt** | `V` | `V` | `M` | `M` |
-| **Move Camera** | `Mouse` | `Mouse` | `Arrow Keys` | `Arrow Keys` (Horizontal-only in DMC3 by default) |
+| Action | DMC5 Style | Classic Style | DMC4 / SE | DMC1/2/3 HDC | DmC (2013) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Sword / Melee Attack** | `Left Click (LMB)` | `Left Click (LMB)` | `I` | `I` | `LMB` (native) |
+| **Style / Buster / Special** | `Right Click (RMB)` | `Mouse Side 4` / `MMB` | `L` | `L` | `F` (Special/Launch) |
+| **Gun / Shoot** | `Mouse Side 4` / `MMB` | `Right Click (RMB)` | `J` | `J` | `RMB` |
+| **Jump** | `Space` | `Space` | `K` | `K` | `Space` (native) |
+| **Lock-On / Evade (DmC)** | `Left Shift` | `Left Shift` | `Space` | `Space` | `Left Shift` (native) |
+| **Devil Trigger** | `F` | `F` | `N` | `F` | `V` |
+| **Switch Gun / Exceed / Angel** | `Q` / `Wheel Up` | `Q` / `Wheel Up` | `Q` | `Q` | `Q` (Angel Mode) |
+| **Switch Melee / Demon** | `E` / `Wheel Down` | `E` / `Wheel Down` | `E` | `E` | `E` (Demon Mode) |
+| **Center Camera** | `Mouse Side 5` / `R` | `Mouse Side 5` / `R` | `P` | `C` | `C` |
+| **Switch Target** | `Tab` / `C` | `Tab` / `C` | `O` | `O` | `Tab` |
+| **Taunt** | `V` | `V` | `M` | `M` | `T` |
+| **Move Camera** | `Mouse` | `Mouse` | `Arrows` | `Arrows` (H-only DMC3) | Native Mouse |
 
 > Every binding in both presets and every game's target keys can be freely customized in the UI or via `dmc_kbm_config.ini`.
 

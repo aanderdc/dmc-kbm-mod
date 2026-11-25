@@ -58,7 +58,7 @@ namespace DmcKbmMod
 
                 var cfg = ModConfig.LoadOrCreate(tempIni);
                 if (!File.Exists(tempIni)) throw new Exception("Config INI was not created.");
-                if (cfg.Games.Count != 4) throw new Exception("Expected 4 game profiles (DMC4, DMC3, DMC1, DMC2).");
+                if (cfg.Games.Count != 5) throw new Exception("Expected 5 game profiles (DMC4, DMC3, DMC1, DMC2, DmC).");
 
                 // Verify switch between DMC5 and Classic presets
                 cfg.ActivePreset = PresetType.ClassicStyle;

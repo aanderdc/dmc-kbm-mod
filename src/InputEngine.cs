@@ -54,19 +54,19 @@ namespace DmcKbmMod
         private Dictionary<InputCode, GameAction> _inputToAction = new Dictionary<InputCode, GameAction>();
         private Dictionary<string, GameProfile> _processLookup = new Dictionary<string, GameProfile>(StringComparer.OrdinalIgnoreCase);
 
-        // Held state tracking (prevents stuck keys & preserves hold across dual bindings)
-        private readonly Dictionary<InputCode, ushort> _activeSourceToTargetVk = new Dictionary<InputCode, ushort>();
-        private readonly Dictionary<ushort, int> _heldTargetVkRefCount = new Dictionary<ushort, int>();
+        // Held state tracking (prevents stuck keys/buttons & preserves hold across dual bindings)
+        private readonly Dictionary<InputCode, InputCode> _activeSourceToTarget = new Dictionary<InputCode, InputCode>();
+        private readonly Dictionary<InputCode, int> _heldTargetRefCount = new Dictionary<InputCode, int>();
 
         // Timed pulse releases (e.g. MouseWheelUp / MouseWheelDown)
-        private readonly Dictionary<ushort, long> _pulseReleaseAtMs = new Dictionary<ushort, long>();
+        private readonly Dictionary<InputCode, long> _pulseReleaseAtMs = new Dictionary<InputCode, long>();
 
         // Camera state
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private long _camHoldUntilX = 0;
         private long _camHoldUntilY = 0;
-        private ushort _camHeldVkX = 0;
-        private ushort _camHeldVkY = 0;
+        private InputCode _camHeldX = InputCode.None;
+        private InputCode _camHeldY = InputCode.None;
 
         // Bind capture mode
         private volatile bool _isCapturingBind = false;
@@ -415,36 +415,36 @@ namespace DmcKbmMod
                 if (Math.Abs(effX) >= 1.5)
                 {
                     GameAction actX = effX > 0 ? GameAction.CameraRight : GameAction.CameraLeft;
-                    ushort targetVk = GetGameTargetVk(prof, actX);
+                    InputCode target = GetGameTargetInput(prof, actX);
                     int holdMs = Config.CameraReleaseDelayMs + Math.Min(25, (int)(Math.Abs(effX) * 0.5));
                     _camHoldUntilX = now + holdMs;
                     CameraDirX = effX > 0 ? 1 : -1;
                     CameraImpulseX = Math.Max(-1.0, Math.Min(1.0, effX / 25.0));
 
-                    if (_camHeldVkX != targetVk)
+                    if (_camHeldX != target)
                     {
-                        if (_camHeldVkX != 0 && !isSimulated) ReleaseTargetVkLocked(_camHeldVkX);
-                        _camHeldVkX = targetVk;
-                        if (_camHeldVkX != 0 && !isSimulated) PressTargetVkLocked(_camHeldVkX);
-                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effX > 0 ? "→" : "←"), actX, _camHeldVkX, true);
+                        if (_camHeldX != InputCode.None && !isSimulated) ReleaseTargetInputLocked(_camHeldX);
+                        _camHeldX = target;
+                        if (_camHeldX != InputCode.None && !isSimulated) PressTargetInputLocked(_camHeldX);
+                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effX > 0 ? "→" : "←"), actX, _camHeldX, true);
                     }
                 }
 
                 if (Math.Abs(effY) >= 1.5)
                 {
                     GameAction actY = effY > 0 ? GameAction.CameraDown : GameAction.CameraUp;
-                    ushort targetVk = GetGameTargetVk(prof, actY);
+                    InputCode target = GetGameTargetInput(prof, actY);
                     int holdMs = Config.CameraReleaseDelayMs + Math.Min(25, (int)(Math.Abs(effY) * 0.5));
                     _camHoldUntilY = now + holdMs;
                     CameraDirY = effY > 0 ? 1 : -1;
                     CameraImpulseY = Math.Max(-1.0, Math.Min(1.0, effY / 25.0));
 
-                    if (_camHeldVkY != targetVk)
+                    if (_camHeldY != target)
                     {
-                        if (_camHeldVkY != 0 && !isSimulated) ReleaseTargetVkLocked(_camHeldVkY);
-                        _camHeldVkY = targetVk;
-                        if (_camHeldVkY != 0 && !isSimulated) PressTargetVkLocked(_camHeldVkY);
-                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effY > 0 ? "↓" : "↑"), actY, _camHeldVkY, true);
+                        if (_camHeldY != InputCode.None && !isSimulated) ReleaseTargetInputLocked(_camHeldY);
+                        _camHeldY = target;
+                        if (_camHeldY != InputCode.None && !isSimulated) PressTargetInputLocked(_camHeldY);
+                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effY > 0 ? "↓" : "↑"), actY, _camHeldY, true);
                     }
                 }
             }
@@ -458,27 +458,27 @@ namespace DmcKbmMod
 
             lock (_stateLock)
             {
-                if (_camHeldVkX != 0 && now >= _camHoldUntilX)
+                if (_camHeldX != InputCode.None && now >= _camHoldUntilX)
                 {
-                    if (!isSimulated) ReleaseTargetVkLocked(_camHeldVkX);
-                    _camHeldVkX = 0;
+                    if (!isSimulated) ReleaseTargetInputLocked(_camHeldX);
+                    _camHeldX = InputCode.None;
                     CameraDirX = 0;
                     CameraImpulseX = 0;
                 }
-                else if (_camHeldVkX == 0 && CameraDirX != 0 && now >= _camHoldUntilX)
+                else if (_camHeldX == InputCode.None && CameraDirX != 0 && now >= _camHoldUntilX)
                 {
                     CameraDirX = 0;
                     CameraImpulseX = 0;
                 }
 
-                if (_camHeldVkY != 0 && now >= _camHoldUntilY)
+                if (_camHeldY != InputCode.None && now >= _camHoldUntilY)
                 {
-                    if (!isSimulated) ReleaseTargetVkLocked(_camHeldVkY);
-                    _camHeldVkY = 0;
+                    if (!isSimulated) ReleaseTargetInputLocked(_camHeldY);
+                    _camHeldY = InputCode.None;
                     CameraDirY = 0;
                     CameraImpulseY = 0;
                 }
-                else if (_camHeldVkY == 0 && CameraDirY != 0 && now >= _camHoldUntilY)
+                else if (_camHeldY == InputCode.None && CameraDirY != 0 && now >= _camHoldUntilY)
                 {
                     CameraDirY = 0;
                     CameraImpulseY = 0;
@@ -486,21 +486,21 @@ namespace DmcKbmMod
 
                 if (_pulseReleaseAtMs.Count > 0)
                 {
-                    List<ushort> expired = null;
+                    List<InputCode> expired = null;
                     foreach (var kv in _pulseReleaseAtMs)
                     {
                         if (now >= kv.Value)
                         {
-                            if (expired == null) expired = new List<ushort>();
+                            if (expired == null) expired = new List<InputCode>();
                             expired.Add(kv.Key);
                         }
                     }
                     if (expired != null)
                     {
-                        foreach (ushort vk in expired)
+                        foreach (InputCode target in expired)
                         {
-                            _pulseReleaseAtMs.Remove(vk);
-                            if (!isSimulated) ReleaseTargetVkLocked(vk);
+                            _pulseReleaseAtMs.Remove(target);
+                            if (!isSimulated) ReleaseTargetInputLocked(target);
                         }
                     }
                 }
@@ -678,41 +678,41 @@ namespace DmcKbmMod
         private bool HandleRemappedInput(GameProfile prof, InputCode source, bool isDown, bool isSimulated)
         {
             GameAction action;
-            ushort targetVk;
+            InputCode target;
 
             lock (_stateLock)
             {
                 if (!_inputToAction.TryGetValue(source, out action))
                     return false;
 
-                targetVk = GetGameTargetVk(prof, action);
-                if (targetVk == 0)
+                target = GetGameTargetInput(prof, action);
+                if (target == InputCode.None)
                     return false;
 
-                // Optimization: if a keyboard key maps to the exact same key in-game (e.g. Q -> Q),
-                // let the native key pass through untouched in real game mode (no duplicate SendInput).
-                if (!isSimulated && ModConfig.IsKeyboardCode(source) && (ushort)source == targetVk)
+                // Optimization: if the physical input equals the exact target input in-game
+                // (e.g., Q -> Q, Space -> Space, LMB -> LMB in DmC), let it pass natively untouched.
+                if (!isSimulated && source == target)
                 {
                     return false;
                 }
 
                 if (isDown)
                 {
-                    if (!_activeSourceToTargetVk.ContainsKey(source))
+                    if (!_activeSourceToTarget.ContainsKey(source))
                     {
-                        _activeSourceToTargetVk[source] = targetVk;
-                        if (!isSimulated) PressTargetVkLocked(targetVk);
-                        if (isSimulated) EmitTelemetry(ModConfig.GetInputLabel(source), action, targetVk, true);
+                        _activeSourceToTarget[source] = target;
+                        if (!isSimulated) PressTargetInputLocked(target);
+                        if (isSimulated) EmitTelemetry(ModConfig.GetInputLabel(source), action, target, true);
                     }
                 }
                 else
                 {
-                    ushort prevVk;
-                    if (_activeSourceToTargetVk.TryGetValue(source, out prevVk))
+                    InputCode prevTarget;
+                    if (_activeSourceToTarget.TryGetValue(source, out prevTarget))
                     {
-                        _activeSourceToTargetVk.Remove(source);
-                        if (!isSimulated) ReleaseTargetVkLocked(prevVk);
-                        if (isSimulated) EmitTelemetry(ModConfig.GetInputLabel(source), action, prevVk, false);
+                        _activeSourceToTarget.Remove(source);
+                        if (!isSimulated) ReleaseTargetInputLocked(prevTarget);
+                        if (isSimulated) EmitTelemetry(ModConfig.GetInputLabel(source), action, prevTarget, false);
                     }
                     else
                     {
@@ -734,57 +734,58 @@ namespace DmcKbmMod
                 if (!_inputToAction.TryGetValue(source, out action))
                     return false;
 
-                ushort targetVk = GetGameTargetVk(prof, action);
-                if (targetVk == 0)
+                InputCode target = GetGameTargetInput(prof, action);
+                if (target == InputCode.None)
                     return false;
 
                 long releaseAt = _clock.ElapsedMilliseconds + Config.WheelPulseMs;
-                if (!_pulseReleaseAtMs.ContainsKey(targetVk))
+                if (!_pulseReleaseAtMs.ContainsKey(target))
                 {
-                    if (!isSimulated) PressTargetVkLocked(targetVk);
+                    if (!isSimulated) PressTargetInputLocked(target);
                 }
-                _pulseReleaseAtMs[targetVk] = releaseAt;
+                _pulseReleaseAtMs[target] = releaseAt;
 
                 if (isSimulated)
-                    EmitTelemetry(ModConfig.GetInputLabel(source), action, targetVk, true);
+                    EmitTelemetry(ModConfig.GetInputLabel(source), action, target, true);
             }
             return true;
         }
 
-        private static ushort GetGameTargetVk(GameProfile prof, GameAction action)
+        private static InputCode GetGameTargetInput(GameProfile prof, GameAction action)
         {
             InputCode target;
-            if (!prof.GameKeys.TryGetValue(action, out target)) return 0;
-            if (!ModConfig.IsKeyboardCode(target)) return 0;
-            return (ushort)target;
+            if (!prof.GameKeys.TryGetValue(action, out target)) return InputCode.None;
+            if (ModConfig.IsKeyboardCode(target) || ModConfig.IsMouseCode(target))
+                return target;
+            return InputCode.None;
         }
 
-        private void PressTargetVkLocked(ushort vk)
+        private void PressTargetInputLocked(InputCode target)
         {
             int count;
-            _heldTargetVkRefCount.TryGetValue(vk, out count);
-            _heldTargetVkRefCount[vk] = count + 1;
+            _heldTargetRefCount.TryGetValue(target, out count);
+            _heldTargetRefCount[target] = count + 1;
             if (count == 0)
             {
-                NativeInput.SendScanKey(vk, true);
+                NativeInput.SendTargetInput(target, true);
             }
         }
 
-        private void ReleaseTargetVkLocked(ushort vk)
+        private void ReleaseTargetInputLocked(InputCode target)
         {
             int count;
-            if (!_heldTargetVkRefCount.TryGetValue(vk, out count) || count <= 0)
+            if (!_heldTargetRefCount.TryGetValue(target, out count) || count <= 0)
                 return;
 
             count--;
             if (count <= 0)
             {
-                _heldTargetVkRefCount.Remove(vk);
-                NativeInput.SendScanKey(vk, false);
+                _heldTargetRefCount.Remove(target);
+                NativeInput.SendTargetInput(target, false);
             }
             else
             {
-                _heldTargetVkRefCount[vk] = count;
+                _heldTargetRefCount[target] = count;
             }
         }
 
@@ -792,15 +793,15 @@ namespace DmcKbmMod
         {
             lock (_stateLock)
             {
-                if (_camHeldVkX != 0)
+                if (_camHeldX != InputCode.None)
                 {
-                    ReleaseTargetVkLocked(_camHeldVkX);
-                    _camHeldVkX = 0;
+                    ReleaseTargetInputLocked(_camHeldX);
+                    _camHeldX = InputCode.None;
                 }
-                if (_camHeldVkY != 0)
+                if (_camHeldY != InputCode.None)
                 {
-                    ReleaseTargetVkLocked(_camHeldVkY);
-                    _camHeldVkY = 0;
+                    ReleaseTargetInputLocked(_camHeldY);
+                    _camHeldY = InputCode.None;
                 }
                 CameraDirX = 0;
                 CameraDirY = 0;
@@ -819,15 +820,15 @@ namespace DmcKbmMod
 
         private void ReleaseAllHeldKeysLocked()
         {
-            foreach (ushort vk in new List<ushort>(_heldTargetVkRefCount.Keys))
+            foreach (InputCode target in new List<InputCode>(_heldTargetRefCount.Keys))
             {
-                NativeInput.SendScanKey(vk, false);
+                NativeInput.SendTargetInput(target, false);
             }
-            _heldTargetVkRefCount.Clear();
-            _activeSourceToTargetVk.Clear();
+            _heldTargetRefCount.Clear();
+            _activeSourceToTarget.Clear();
             _pulseReleaseAtMs.Clear();
-            _camHeldVkX = 0;
-            _camHeldVkY = 0;
+            _camHeldX = InputCode.None;
+            _camHeldY = InputCode.None;
             CameraDirX = 0;
             CameraDirY = 0;
             CameraImpulseX = 0;
@@ -839,21 +840,30 @@ namespace DmcKbmMod
             return pt.X >= rc.Left && pt.X <= rc.Right && pt.Y >= rc.Top && pt.Y <= rc.Bottom;
         }
 
-        private void EmitTelemetry(string physicalLabel, GameAction action, ushort targetVk, bool isDown)
+        private void EmitTelemetry(string physicalLabel, GameAction action, InputCode targetCode, bool isDown)
         {
             var handler = TelemetryLogged;
             if (handler == null) return;
 
-            bool ext;
-            ushort scan = NativeInput.GetScanCode(targetVk, out ext);
-            InputCode targetCode = ModConfig.FromVirtualKey(targetVk);
+            string scanStr;
+            if (ModConfig.IsKeyboardCode(targetCode))
+            {
+                bool ext;
+                ushort scan = NativeInput.GetScanCode((ushort)targetCode, out ext);
+                scanStr = string.Format("0x{0:X2}{1}", scan, ext ? " (EXT)" : "");
+            }
+            else
+            {
+                scanStr = "MOUSE";
+            }
+
             handler(new LiveInputTelemetry
             {
                 Timestamp = DateTime.Now.ToString("HH:mm:ss.fff"),
                 PhysicalInput = physicalLabel,
                 ActionName = ModConfig.GetActionLabel(action),
                 TargetKey = ModConfig.GetInputLabel(targetCode),
-                ScanCodeHex = string.Format("0x{0:X2}{1}", scan, ext ? " (EXT)" : ""),
+                ScanCodeHex = scanStr,
                 IsDown = isDown
             });
         }

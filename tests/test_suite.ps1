@@ -29,6 +29,7 @@ Assert ($procLookup.ContainsKey("DevilMayCry4_DX10") -and $procLookup["DevilMayC
 Assert ($procLookup.ContainsKey("dmc1") -and $procLookup["dmc1"].Id -eq "DMC1") "dmc1.exe detected -> DMC1"
 Assert ($procLookup.ContainsKey("dmc2") -and $procLookup["dmc2"].Id -eq "DMC2") "dmc2.exe detected -> DMC2"
 Assert ($procLookup.ContainsKey("dmc3") -and $procLookup["dmc3"].Id -eq "DMC3") "dmc3.exe detected -> DMC3"
+Assert ($procLookup.ContainsKey("DMC-DevilMayCry") -and $procLookup["DMC-DevilMayCry"].Id -eq "DmC") "DMC-DevilMayCry.exe detected -> DmC (2013)"
 Assert (-not $procLookup.ContainsKey("dmcLauncher")) "dmcLauncher.exe intentionally excluded"
 
 Write-Host "=== 3. Preset Switch & Remap Telemetry (DMC4 vs DMC3) ===" -ForegroundColor Cyan
@@ -42,6 +43,7 @@ $handlePulse = $engine.GetType().GetMethod("HandlePulseInput", $flags)
 [DmcKbmMod.GameProfile]$dmc4 = $cfg.Games[0]
 [DmcKbmMod.GameProfile]$dmc3 = $cfg.Games[1]
 [DmcKbmMod.GameProfile]$dmc1 = $cfg.Games[2]
+[DmcKbmMod.GameProfile]$dmcReboot = $cfg.Games[4]
 
 # DMC5 Preset checks on DMC4
 $engine.SetPreset([DmcKbmMod.PresetType]::Dmc5Style, $false)
@@ -77,6 +79,17 @@ Assert ($events[0].TargetKey -eq "J" -and $events[0].ScanCodeHex -eq "0x24") "Cl
 Assert ($events[1].TargetKey -eq "L" -and $events[1].ScanCodeHex -eq "0x26") "Classic preset: Mouse4 -> Style/Buster (L / 0x26)"
 Assert ($events[2].TargetKey -eq "F" -and $events[2].ScanCodeHex -eq "0x21") "DMC3: F -> DevilTrigger (F / 0x21)"
 Assert ($events[3].TargetKey -eq "C" -and $events[3].ScanCodeHex -eq "0x2E") "DMC3: Mouse5 -> CameraReset (C / 0x2E)"
+
+# DmC (2013) checks (DMC5 style -> RMB sends F Special, Mouse4 sends RMB Gun; Classic -> native passthrough)
+$engine.SetPreset([DmcKbmMod.PresetType]::Dmc5Style, $false)
+$events.Clear()
+$handleRemap.Invoke($engine, [object[]]@($dmcReboot, [DmcKbmMod.InputCode]::MouseRight, $true, $true)) | Out-Null
+$handleRemap.Invoke($engine, [object[]]@($dmcReboot, [DmcKbmMod.InputCode]::MouseX1, $true, $true)) | Out-Null
+$handleRemap.Invoke($engine, [object[]]@($dmcReboot, [DmcKbmMod.InputCode]::F, $true, $true)) | Out-Null
+Assert ($events[0].TargetKey -eq "F" -and $events[0].ScanCodeHex -eq "0x21") "DmC (DMC5 preset): RMB -> Special/Launch (F / 0x21)"
+Assert ($events[1].ScanCodeHex -eq "MOUSE") "DmC (DMC5 preset): Mouse4 -> Gun (RMB / MOUSE)"
+Assert ($events[2].TargetKey -eq "V" -and $events[2].ScanCodeHex -eq "0x2F") "DmC: F -> DevilTrigger (V / 0x2F)"
+Assert (-not $dmcReboot.EnableMouseCamera) "DmC keeps native PC mouse camera enabled (mod camera off by default)"
 
 Write-Host "=== 4. Mouse Camera Engine (Deadzone, Inversion, Horizontal-Only, Release Timer) ===" -ForegroundColor Cyan
 $engine.BypassForegroundCheckForTests = $true
@@ -143,4 +156,4 @@ $exited = $proc.WaitForExit(4000)
 if (-not $exited) { $proc.Kill() }
 Assert ($closed -and $exited -and $proc.ExitCode -eq 0) "GUI closed cleanly with ExitCode 0"
 
-Write-Host "`nALL 32 TESTS PASSED!" -ForegroundColor Green
+Write-Host "`nALL 37 TESTS PASSED!" -ForegroundColor Green

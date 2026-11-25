@@ -328,7 +328,34 @@ namespace DmcKbmMod
                 }
             };
 
-            return new List<GameProfile> { dmc4, dmc3, dmc1, dmc2 };
+            var dmcReboot = new GameProfile
+            {
+                Id = "DmC",
+                DisplayName = "DmC: Devil May Cry (2013)",
+                ProcessNames = new List<string> { "DMC-DevilMayCry" },
+                EnableMouseCamera = false, // DmC (2013) has native PC mouse camera
+                HorizontalOnlyCamera = false,
+                GameKeys = new Dictionary<GameAction, InputCode>
+                {
+                    { GameAction.Melee, InputCode.MouseLeft },
+                    { GameAction.Gun, InputCode.MouseRight },
+                    { GameAction.StyleOrBuster, InputCode.F },          // Special / Launch / Pull
+                    { GameAction.Jump, InputCode.Space },
+                    { GameAction.LockOn, InputCode.LShift },            // Evade / Dodge in DmC
+                    { GameAction.DevilTrigger, InputCode.V },
+                    { GameAction.ChangeGunOrExceed, InputCode.Q },      // Angel Mode
+                    { GameAction.ChangeSword, InputCode.E },            // Demon Mode
+                    { GameAction.CameraReset, InputCode.C },
+                    { GameAction.ChangeTarget, InputCode.Tab },
+                    { GameAction.Taunt, InputCode.T },
+                    { GameAction.CameraUp, InputCode.Up },
+                    { GameAction.CameraDown, InputCode.Down },
+                    { GameAction.CameraLeft, InputCode.Left },
+                    { GameAction.CameraRight, InputCode.Right }
+                }
+            };
+
+            return new List<GameProfile> { dmc4, dmc3, dmc1, dmc2, dmcReboot };
         }
 
         public static string GetActionLabel(GameAction action)
