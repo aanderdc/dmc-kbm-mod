@@ -248,7 +248,7 @@ namespace DmcKbmMod
 
         private void ApplyLocalization()
         {
-            _btnLangSwitch.Text = Localization.IsEs ? "ES ⇄ EN" : "EN ⇄ ES";
+            _btnLangSwitch.Text = Localization.IsEs ? "ES / EN" : "EN / ES";
             _lblAdminWarning.Text = Localization.T("⚠ Game running as Admin", "⚠ Juego ejecutado como Admin");
             _btnRestartAdmin.Text = Localization.T("Run as Admin", "Reiniciar Admin");
 
@@ -328,15 +328,46 @@ namespace DmcKbmMod
             var headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 82,
-                BackColor = BgCard,
-                Padding = new Padding(16, 10, 16, 10)
+                Height = 84,
+                BackColor = BgCard
             };
             headerPanel.Paint += (s, e) =>
             {
                 using (var p = new Pen(AccentCrimson, 2))
                     e.Graphics.DrawLine(p, 0, headerPanel.Height - 1, headerPanel.Width, headerPanel.Height - 1);
             };
+
+            var headerButtons = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                WrapContents = false,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0, 20, 14, 0)
+            };
+
+            _btnMasterToggle = CreateStyledButton("MOD: ON (F1)", AccentGreen, 152, 36);
+            _btnMasterToggle.Margin = new Padding(8, 0, 0, 0);
+            _btnMasterToggle.Click += (s, e) =>
+            {
+                _engine.SetModEnabled(!_engine.ModEnabled, false);
+                _config.StartEnabled = _engine.ModEnabled;
+                SaveConfigSafe();
+            };
+
+            _btnRestartAdmin = CreateStyledButton("Run as Admin", BgInput, 118, 36);
+            _btnRestartAdmin.Margin = new Padding(8, 0, 0, 0);
+            _btnRestartAdmin.Visible = !NativeInput.IsCurrentProcessAdmin();
+            _btnRestartAdmin.Click += (s, e) => RestartAsAdmin();
+
+            _btnLangSwitch = CreateStyledButton("EN / ES", AccentBlue, 82, 36);
+            _btnLangSwitch.Margin = new Padding(8, 0, 0, 0);
+            _btnLangSwitch.Click += (s, e) => ToggleLanguage();
+
+            headerButtons.Controls.Add(_btnMasterToggle);
+            headerButtons.Controls.Add(_btnRestartAdmin);
+            headerButtons.Controls.Add(_btnLangSwitch);
 
             var lblTitle = new Label
             {
@@ -359,7 +390,7 @@ namespace DmcKbmMod
             _lblStatusText = new Label
             {
                 Text = "",
-                Font = new Font("Segoe UI", 9.5f),
+                Font = new Font("Segoe UI", 9.2f),
                 ForeColor = TextMuted,
                 AutoSize = true,
                 Location = new Point(36, 42)
@@ -372,34 +403,12 @@ namespace DmcKbmMod
                 ForeColor = AccentAmber,
                 AutoSize = true,
                 Visible = false,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(445, 56)
-            };
-
-            _btnLangSwitch = CreateStyledButton("EN ⇄ ES", BgInput, 76, 32);
-            _btnLangSwitch.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _btnLangSwitch.Location = new Point(494, 22);
-            _btnLangSwitch.Click += (s, e) => ToggleLanguage();
-
-            _btnRestartAdmin = CreateStyledButton("Run as Admin", BgInput, 118, 32);
-            _btnRestartAdmin.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _btnRestartAdmin.Location = new Point(578, 22);
-            _btnRestartAdmin.Visible = !NativeInput.IsCurrentProcessAdmin();
-            _btnRestartAdmin.Click += (s, e) => RestartAsAdmin();
-
-            _btnMasterToggle = CreateStyledButton("MOD: ON (F1)", AccentGreen, 162, 36);
-            _btnMasterToggle.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _btnMasterToggle.Location = new Point(704, 20);
-            _btnMasterToggle.Click += (s, e) =>
-            {
-                _engine.SetModEnabled(!_engine.ModEnabled, false);
-                _config.StartEnabled = _engine.ModEnabled;
-                SaveConfigSafe();
+                Location = new Point(36, 60)
             };
 
             headerPanel.Controls.AddRange(new Control[]
             {
-                lblTitle, _lblStatusDot, _lblStatusText, _lblAdminWarning, _btnLangSwitch, _btnRestartAdmin, _btnMasterToggle
+                lblTitle, _lblStatusDot, _lblStatusText, _lblAdminWarning, headerButtons
             });
 
             // 2. Prominent Dual-Preset Switch Bar
@@ -407,8 +416,7 @@ namespace DmcKbmMod
             {
                 Dock = DockStyle.Top,
                 Height = 76,
-                BackColor = Color.FromArgb(22, 22, 30),
-                Padding = new Padding(16, 10, 16, 10)
+                BackColor = Color.FromArgb(22, 22, 30)
             };
 
             _lblSwitchTitle = new Label
@@ -443,8 +451,11 @@ namespace DmcKbmMod
                 ForeColor = TextMuted,
                 AutoSize = false,
                 Size = new Size(255, 42),
-                Location = new Point(618, 26),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Location = new Point(618, 26)
+            };
+            switchBar.Resize += (s, e) =>
+            {
+                _lblPresetSummary.Width = Math.Max(140, switchBar.ClientSize.Width - _lblPresetSummary.Left - 14);
             };
 
             switchBar.Controls.AddRange(new Control[]
@@ -499,8 +510,11 @@ namespace DmcKbmMod
             };
 
             _btnResetPreset = CreateStyledButton("", BgInput, 138, 30);
-            _btnResetPreset.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             _btnResetPreset.Location = new Point(720, 8);
+            topBar.Resize += (s, e) =>
+            {
+                _btnResetPreset.Left = Math.Max(520, topBar.ClientSize.Width - _btnResetPreset.Width - 14);
+            };
             _btnResetPreset.Click += (s, e) =>
             {
                 if (_config.ActivePreset == PresetType.Dmc5Style)
@@ -530,15 +544,16 @@ namespace DmcKbmMod
             };
 
             int y = 8;
+            var bindingRows = new List<Panel>();
             foreach (var action in ModConfig.EditablePlayerActions)
             {
                 var row = new Panel
                 {
                     Location = new Point(8, y),
-                    Size = new Size(830, 38),
-                    BackColor = BgCard,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                    Size = new Size(820, 38),
+                    BackColor = BgCard
                 };
+                bindingRows.Add(row);
 
                 var lblAct = new Label
                 {
@@ -574,6 +589,11 @@ namespace DmcKbmMod
                 AutoSize = true
             };
             _bindingsScrollPanel.Controls.Add(_lblBindingsNote);
+            _bindingsScrollPanel.Resize += (s, e) =>
+            {
+                int w = Math.Max(740, _bindingsScrollPanel.ClientSize.Width - 28);
+                foreach (var r in bindingRows) r.Width = w;
+            };
 
             page.Controls.Add(_bindingsScrollPanel);
             page.Controls.Add(colHeader);
@@ -916,6 +936,10 @@ namespace DmcKbmMod
 
             _btnClearLog = CreateStyledButton("", BgInput, 100, 32);
             _btnClearLog.Location = new Point(738, 12);
+            topPanel.Resize += (s, e) =>
+            {
+                _btnClearLog.Left = Math.Max(650, topPanel.ClientSize.Width - _btnClearLog.Width - 14);
+            };
             _btnClearLog.Click += (s, e) => _lstTelemetry.Items.Clear();
 
             topPanel.Controls.AddRange(new Control[] { _btnToggleTestMode, _lblSimProfile, _cmbTestGame, _btnClearLog });
@@ -924,8 +948,8 @@ namespace DmcKbmMod
 
             _testCanvas = new Panel
             {
-                Location = new Point(14, 14),
-                Size = new Size(340, 370),
+                Dock = DockStyle.Left,
+                Width = 340,
                 BackColor = Color.FromArgb(24, 24, 34),
                 BorderStyle = BorderStyle.FixedSingle
             };
@@ -934,19 +958,20 @@ namespace DmcKbmMod
                 null, _testCanvas, new object[] { true });
             _testCanvas.Paint += PaintTestCanvas;
 
+            var spacer = new Panel { Dock = DockStyle.Left, Width = 14, BackColor = BgDark };
+
             _lstTelemetry = new ListBox
             {
-                Location = new Point(368, 14),
-                Size = new Size(482, 370),
+                Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(14, 14, 20),
                 ForeColor = Color.FromArgb(215, 225, 240),
                 Font = new Font("Consolas", 8.8f),
-                BorderStyle = BorderStyle.FixedSingle,
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+                BorderStyle = BorderStyle.FixedSingle
             };
 
-            body.Controls.Add(_testCanvas);
             body.Controls.Add(_lstTelemetry);
+            body.Controls.Add(spacer);
+            body.Controls.Add(_testCanvas);
 
             page.Controls.Add(body);
             page.Controls.Add(topPanel);
