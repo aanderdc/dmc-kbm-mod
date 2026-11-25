@@ -1,69 +1,73 @@
 # DMC KBM Mod (DMC4 / DMC4SE & DMC HD Collection)
 
-Mod ligero y portable de **Teclado y Ratón (KBM)** para **Devil May Cry 4**, **Devil May Cry 4 Special Edition** y **Devil May Cry HD Collection (DMC1, DMC2 y DMC3)** en Windows.
+> 🌐 **Language:** **English** | [Español](README.es.md)
 
-Funciona en segundo plano sin modificar ni sobrescribir ningún archivo de los juegos, por lo que es **100% compatible** con mods basados en `dinput8.dll` como **DDMK**, **DMC3 Crimson**, **dmc4_hook** y **LauncherFix**.
+Lightweight, portable **Keyboard & Mouse (KBM)** mod for **Devil May Cry 4**, **Devil May Cry 4 Special Edition**, and **Devil May Cry HD Collection (DMC1, DMC2, and DMC3)** on Windows.
+
+Runs cleanly in the background without touching or overwriting any game files, making it **100% compatible** with `dinput8.dll` mods such as **DDMK**, **DMC3 Crimson**, **dmc4_hook**, and **LauncherFix**.
 
 ---
 
-## Características principales
+## Key Features
 
-- **Detección automática del juego activo** (solo intercepta teclado/ratón cuando la ventana del juego está en primer plano):
+- **Automatic game detection** (only intercepts keyboard/mouse while a supported game window is focused):
   - `DevilMayCry4SpecialEdition.exe` (DMC4 SE)
   - `DevilMayCry4_DX9.exe` / `DevilMayCry4_DX10.exe` (DMC4 2008)
-  - `dmc1.exe`, `dmc2.exe`, `dmc3.exe` (DMC HD Collection — deja libre `dmcLauncher.exe` para usar el ratón normal en el selector)
-- **Switch instantáneo entre 2 esquemas de controles** (desde la ventana, desde la bandeja del sistema o en plena partida con **`F2`**):
-  - **Estilo DMC5**: `Clic Izq` Espada · `Clic Der` Estilo/Buster · `Botón Lateral 4 / Clic Medio` Pistola
-  - **Estilo Clásico**: `Clic Izq` Espada · `Clic Der` Pistola · `Botón Lateral 4 / Clic Medio` Estilo/Buster
-- **Compatible con DirectInput**: envía códigos de escaneo de hardware (`KEYEVENTF_SCANCODE` + `EXTENDEDKEY`) para que MT Framework (DMC4/SE) y DMC HD Collection respondan siempre, incluyendo mantener pulsado (Charge Shot, Exceed, Lock-On, Royal Guard).
-- **Cámara con ratón por Raw Input (`WM_INPUT`)**: sensibilidad X/Y independiente, zona muerta, suavizado de retención, inversión de ejes, modo solo horizontal para DMC1/2/3 y confinamiento opcional del cursor a la ventana del juego (`ClipCursor`).
-- **Probador en Vivo integrado**: te permite probar los controles, el switch DMC5 ⇄ Clásico y la cámara por ratón **hoy mismo sin tener los juegos instalados**.
-- **Sin dependencias externas**: `DMC_KBM_Mod.exe` es portable (78 KB) y guarda toda la configuración en `dmc_kbm_config.ini`.
+  - `dmc1.exe`, `dmc2.exe`, `dmc3.exe` (DMC HD Collection — leaves `dmcLauncher.exe` untouched so mouse clicks work normally in the launcher)
+- **Instant toggle between 2 control presets** (from the app UI, system tray, or in-game with **`F2`**):
+  - **DMC5 Style**: `LMB` Sword · `RMB` Style/Buster · `Mouse Side 4 / MMB` Gun
+  - **Classic Style**: `LMB` Sword · `RMB` Gun · `Mouse Side 4 / MMB` Style/Buster
+- **DirectInput-ready hardware scan codes**: injects proper `KEYEVENTF_SCANCODE` + `EXTENDEDKEY` inputs so MT Framework (DMC4/SE) and DMC HD Collection respond reliably, including sustained holds (Charge Shot, Exceed, Lock-On, Royal Guard).
+- **Raw Input Mouse Camera (`WM_INPUT`)**: independent X/Y sensitivity, deadzone, release smoothing, axis inversion, horizontal-only mode for DMC1/2/3, and optional cursor confinement (`ClipCursor`).
+- **Bilingual UI (`EN ⇄ ES`)**: auto-detects Windows language and lets you switch between English and Spanish live with one click.
+- **Built-in Live Tester**: test mouse clicks, wheel, keyboard remaps, camera radar, and the DMC5 ⇄ Classic switch right inside the app without even launching a game.
+- **Zero external dependencies**: portable ~80 KB executable (`DMC_KBM_Mod.exe`), saving all settings to `dmc_kbm_config.ini`.
 
 ---
 
-## Controles por defecto
+## Default Controls
 
-Movimiento (`W, A, S, D`) y Estilos de Dante (`1, 2, 3, 4` en DMC4 / DDMK) funcionan de forma nativa.
+Movement (`W, A, S, D`) and Dante's Styles (`1, 2, 3, 4` in DMC4 / DDMK) pass through natively.
 
-| Acción | Estilo DMC5 | Estilo Clásico | Tecla enviada (DMC4 / SE) | Tecla enviada (DMC1/2/3 HDC) |
+| Action | DMC5 Style | Classic Style | Sent Key (DMC4 / SE) | Sent Key (DMC1/2/3 HDC) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Espada / Melee** | `Clic Izq` | `Clic Izq` | `I` | `I` |
-| **Estilo / Devil Bringer / Acción** | `Clic Der` | `Ratón Lat. 4` / `Clic Medio` | `L` | `L` |
-| **Pistola / Disparo** | `Ratón Lat. 4` / `Clic Medio` | `Clic Der` | `J` | `J` |
-| **Saltar** | `Espacio` | `Espacio` | `K` | `K` |
-| **Fijar Objetivo (Lock-On)** | `Shift Izq` | `Shift Izq` | `Espacio` | `Espacio` |
+| **Sword / Melee Attack** | `Left Click (LMB)` | `Left Click (LMB)` | `I` | `I` |
+| **Style / Devil Bringer / Action** | `Right Click (RMB)` | `Mouse Side 4` / `MMB` | `L` | `L` |
+| **Gun / Shoot** | `Mouse Side 4` / `MMB` | `Right Click (RMB)` | `J` | `J` |
+| **Jump** | `Space` | `Space` | `K` | `K` |
+| **Lock-On** | `Left Shift` | `Left Shift` | `Space` | `Space` |
 | **Devil Trigger** | `F` | `F` | `N` | `F` |
-| **Cambiar Pistola / Exceed** | `Q` / `Rueda Arriba` | `Q` / `Rueda Arriba` | `Q` | `Q` |
-| **Cambiar Arma Melee** | `E` / `Rueda Abajo` | `E` / `Rueda Abajo` | `E` | `E` |
-| **Centrar Cámara** | `Ratón Lat. 5` / `R` | `Ratón Lat. 5` / `R` | `P` | `C` |
-| **Cambiar Objetivo** | `Tab` / `C` | `Tab` / `C` | `O` | `O` |
-| **Burla (Taunt)** | `V` | `V` | `M` | `M` |
-| **Mover Cámara** | `Ratón` | `Ratón` | `Flechas` | `Flechas` (solo H en DMC3 por defecto) |
+| **Switch Gun / Exceed** | `Q` / `Wheel Up` | `Q` / `Wheel Up` | `Q` | `Q` |
+| **Switch Melee Weapon** | `E` / `Wheel Down` | `E` / `Wheel Down` | `E` | `E` |
+| **Center Camera** | `Mouse Side 5` / `R` | `Mouse Side 5` / `R` | `P` | `C` |
+| **Switch Target** | `Tab` / `C` | `Tab` / `C` | `O` | `O` |
+| **Taunt** | `V` | `V` | `M` | `M` |
+| **Move Camera** | `Mouse` | `Mouse` | `Arrow Keys` | `Arrow Keys` (Horizontal-only in DMC3 by default) |
 
-> Todos los controles de ambos esquemas y las teclas internas de cada juego se pueden reasignar desde la interfaz o editando `dmc_kbm_config.ini`.
-
----
-
-## Atajos en juego
-
-- **`F1`**: Activar / Pausar el mod (útil en menús o si quieres usar el ratón libremente).
-- **`F2`**: Cambiar al vuelo entre **Estilo DMC5** y **Estilo Clásico** (muestra un aviso discreto en la esquina sin sacar el foco del juego).
-- **`F3`**: Activar / Desactivar la cámara con ratón (mantiene activos los botones del ratón).
+> Every binding in both presets and every game's target keys can be freely customized in the UI or via `dmc_kbm_config.ini`.
 
 ---
 
-## Cómo usarlo
+## In-Game Hotkeys
 
-1. Ejecuta **`DMC_KBM_Mod.exe`**.
-2. Elige **Estilo DMC5** o **Estilo Clásico** en la parte superior (o cámbialo cuando quieras con `F2`).
-3. *(Opcional)* Abre la pestaña **Probador en Vivo** y pulsa **Activar Modo Prueba Local** para probar clics, rueda, teclado y movimiento de cámara ahora mismo sin tener el juego instalado.
-4. Cuando instales DMC4 / DMC4SE o DMC HD Collection, simplemente deja `DMC_KBM_Mod.exe` abierto (puedes minimizarlo a la bandeja del sistema) y abre el juego con sus controles de teclado por defecto.
+- **`F1`**: Enable / Pause the mod (handy for menus or free mouse usage).
+- **`F2`**: Switch on the fly between **DMC5 Style** and **Classic Style** (shows a non-focus-stealing HUD toast in the top-right corner).
+- **`F3`**: Toggle mouse camera on/off (keeps mouse button bindings active).
 
 ---
 
-## Solución de problemas
+## Usage
 
-- **El juego no recibe los clics o teclas del mod:** si lanzas DMC4 o Steam como Administrador, Windows bloquea la entrada desde apps sin privilegios (UIPI). Pulsa el botón **"Reiniciar Admin"** en la barra superior de `DMC_KBM_Mod.exe`.
-- **Cambiaste las teclas dentro de las opciones del juego:** abre la pestaña **Perfiles por Juego** y ajusta las teclas reales que espera ese juego concreto.
-- **Recompilar desde el código fuente:** ejecuta `powershell -ExecutionPolicy Bypass -File build.ps1` (usa el compilador `csc.exe` integrado en Windows, no requiere Visual Studio).
+1. Download **`DMC_KBM_Mod.exe`** from [Releases](https://github.com/aanderdc/dmc-kbm-mod/releases) and run it (no installation needed).
+2. Pick **DMC5 Style** or **Classic Style** at the top (or switch anytime in-game with `F2`).
+3. *(Optional)* Open the **Live Tester** tab and click **Start Local Test Mode** to verify clicks, scroll wheel, keys, and mouse camera behavior immediately.
+4. Launch DMC4 / DMC4SE or DMC HD Collection with default keyboard bindings while `DMC_KBM_Mod.exe` runs in the background (you can minimize it to the system tray).
+
+---
+
+## Troubleshooting & Building from Source
+
+- **Game doesn't respond to mod inputs:** If Steam or the game runs as Administrator, Windows blocks input from non-elevated apps (UIPI). Click the **"Run as Admin"** button in the top bar of `DMC_KBM_Mod.exe`.
+- **Custom in-game bindings:** If you already rebound keys inside a game's own options menu, update the target keys under the **Game Profiles** tab.
+- **Build from source:** Run `powershell -ExecutionPolicy Bypass -File build.ps1` (uses the built-in Windows `.NET Framework 4.x` C# compiler — Visual Studio is not required).
+- **Run test suite:** Run `powershell -ExecutionPolicy Bypass -File tests\test_suite.ps1`.

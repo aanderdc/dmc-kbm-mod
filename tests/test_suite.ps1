@@ -59,7 +59,7 @@ $handlePulse.Invoke($engine, [object[]]@($dmc4, [DmcKbmMod.InputCode]::MouseWhee
 Assert ($events[0].TargetKey -eq "L" -and $events[0].ScanCodeHex -eq "0x26") "DMC5 preset: RMB -> Style/Buster (L / 0x26)"
 Assert ($events[2].TargetKey -eq "J" -and $events[2].ScanCodeHex -eq "0x24") "DMC5 preset: Mouse4 -> Gun (J / 0x24)"
 Assert ($events[4].TargetKey -eq "K" -and $events[4].ScanCodeHex -eq "0x25") "Space -> Jump (K / 0x25)"
-Assert ($events[5].TargetKey -eq "Espacio" -and $events[5].ScanCodeHex -eq "0x39") "LShift -> Lock-On (Space / 0x39)"
+Assert (($events[5].TargetKey -eq "Space" -or $events[5].TargetKey -eq "Espacio") -and $events[5].ScanCodeHex -eq "0x39") "LShift -> Lock-On (Space / 0x39)"
 Assert ($events[6].TargetKey -eq "N" -and $events[6].ScanCodeHex -eq "0x31") "DMC4: F -> DevilTrigger (N / 0x31)"
 Assert ($events[7].TargetKey -eq "P" -and $events[7].ScanCodeHex -eq "0x19") "DMC4: Mouse5 -> CameraReset (P / 0x19)"
 Assert ($events[8].TargetKey -eq "E" -and $events[8].ScanCodeHex -eq "0x12") "WheelDown -> ChangeSword (E / 0x12)"
@@ -118,6 +118,17 @@ Assert ($engine.CameraDirX -eq 0 -and $engine.CameraDirY -eq 0) "DMC1 camera dis
 
 $engine.Dispose()
 
+Write-Host "=== 4b. Bilingual Localization (EN / ES) ===" -ForegroundColor Cyan
+[DmcKbmMod.Localization]::SetLanguage("en")
+Assert ([DmcKbmMod.ModConfig]::GetActionLabel([DmcKbmMod.GameAction]::Melee) -eq "Sword / Melee Attack") "EN action label verified"
+Assert ([DmcKbmMod.ModConfig]::GetInputLabel([DmcKbmMod.InputCode]::Space) -eq "Space") "EN input label verified"
+Assert ([DmcKbmMod.InputEngine]::GetPresetDisplayName([DmcKbmMod.PresetType]::Dmc5Style) -eq "DMC5 Style") "EN preset label verified"
+
+[DmcKbmMod.Localization]::SetLanguage("es")
+Assert ([DmcKbmMod.ModConfig]::GetActionLabel([DmcKbmMod.GameAction]::Melee) -eq "Espada / Ataque Melee") "ES action label verified"
+Assert ([DmcKbmMod.ModConfig]::GetInputLabel([DmcKbmMod.InputCode]::Space) -eq "Espacio") "ES input label verified"
+Assert ([DmcKbmMod.InputEngine]::GetPresetDisplayName([DmcKbmMod.PresetType]::Dmc5Style) -eq "Estilo DMC5") "ES preset label verified"
+
 Write-Host "=== 5. Real GUI Launch & Clean Exit Smoke Test ===" -ForegroundColor Cyan
 $proc = Start-Process -FilePath $exe -PassThru
 Start-Sleep -Milliseconds 1500
@@ -132,4 +143,4 @@ $exited = $proc.WaitForExit(4000)
 if (-not $exited) { $proc.Kill() }
 Assert ($closed -and $exited -and $proc.ExitCode -eq 0) "GUI closed cleanly with ExitCode 0"
 
-Write-Host "`nALL 26 TESTS PASSED!" -ForegroundColor Green
+Write-Host "`nALL 32 TESTS PASSED!" -ForegroundColor Green

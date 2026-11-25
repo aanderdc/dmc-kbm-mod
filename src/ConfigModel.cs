@@ -123,6 +123,7 @@ namespace DmcKbmMod
 
     public class ModConfig
     {
+        public string Language { get; set; }
         public PresetType ActivePreset { get; set; }
         public bool StartEnabled { get; set; }
         public bool ShowOverlayToast { get; set; }
@@ -147,6 +148,7 @@ namespace DmcKbmMod
 
         public ModConfig()
         {
+            Language = "auto";
             ActivePreset = PresetType.Dmc5Style;
             StartEnabled = true;
             ShowOverlayToast = true;
@@ -331,62 +333,12 @@ namespace DmcKbmMod
 
         public static string GetActionLabel(GameAction action)
         {
-            switch (action)
-            {
-                case GameAction.Melee: return "Espada / Ataque Melee";
-                case GameAction.Gun: return "Pistola / Disparo";
-                case GameAction.StyleOrBuster: return "Estilo / Devil Bringer / Acción";
-                case GameAction.Jump: return "Saltar";
-                case GameAction.LockOn: return "Fijar Objetivo (Lock-On)";
-                case GameAction.DevilTrigger: return "Devil Trigger";
-                case GameAction.ChangeGunOrExceed: return "Cambiar Pistola / Exceed";
-                case GameAction.ChangeSword: return "Cambiar Arma Melee";
-                case GameAction.CameraReset: return "Centrar Cámara";
-                case GameAction.ChangeTarget: return "Cambiar Objetivo";
-                case GameAction.Taunt: return "Burla (Taunt)";
-                case GameAction.CameraUp: return "Cámara Arriba";
-                case GameAction.CameraDown: return "Cámara Abajo";
-                case GameAction.CameraLeft: return "Cámara Izquierda";
-                case GameAction.CameraRight: return "Cámara Derecha";
-                default: return action.ToString();
-            }
+            return Localization.ActionLabel(action);
         }
 
         public static string GetInputLabel(InputCode code)
         {
-            switch (code)
-            {
-                case InputCode.None: return "(Sin asignar)";
-                case InputCode.MouseLeft: return "Clic Izq (LMB)";
-                case InputCode.MouseRight: return "Clic Der (RMB)";
-                case InputCode.MouseMiddle: return "Clic Medio (MMB)";
-                case InputCode.MouseX1: return "Ratón Lateral 4 (Atrás)";
-                case InputCode.MouseX2: return "Ratón Lateral 5 (Adelante)";
-                case InputCode.MouseWheelUp: return "Rueda Arriba";
-                case InputCode.MouseWheelDown: return "Rueda Abajo";
-                case InputCode.Space: return "Espacio";
-                case InputCode.LShift: return "Shift Izq";
-                case InputCode.RShift: return "Shift Der";
-                case InputCode.LCtrl: return "Ctrl Izq";
-                case InputCode.RCtrl: return "Ctrl Der";
-                case InputCode.LAlt: return "Alt Izq";
-                case InputCode.RAlt: return "Alt Der";
-                case InputCode.Up: return "Flecha Arriba";
-                case InputCode.Down: return "Flecha Abajo";
-                case InputCode.Left: return "Flecha Izquierda";
-                case InputCode.Right: return "Flecha Derecha";
-                case InputCode.D0: return "0";
-                case InputCode.D1: return "1";
-                case InputCode.D2: return "2";
-                case InputCode.D3: return "3";
-                case InputCode.D4: return "4";
-                case InputCode.D5: return "5";
-                case InputCode.D6: return "6";
-                case InputCode.D7: return "7";
-                case InputCode.D8: return "8";
-                case InputCode.D9: return "9";
-                default: return code.ToString();
-            }
+            return Localization.InputLabel(code);
         }
 
         public static bool IsMouseCode(InputCode code)
@@ -449,11 +401,12 @@ namespace DmcKbmMod
         public void Save(string path)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("; DMC KBM Mod - Archivo de configuracion");
-            sb.AppendLine("; Puedes editarlo manualmente o desde la aplicacion.");
+            sb.AppendLine("; DMC KBM Mod - Configuration file / Archivo de configuracion");
+            sb.AppendLine("; Edit manually or via the app UI. Language: auto, en, es");
             sb.AppendLine();
 
             sb.AppendLine("[General]");
+            sb.AppendLine("Language=" + (string.IsNullOrEmpty(Language) ? "auto" : Language));
             sb.AppendLine("ActivePreset=" + ActivePreset);
             sb.AppendLine("StartEnabled=" + StartEnabled);
             sb.AppendLine("ShowOverlayToast=" + ShowOverlayToast);
@@ -543,7 +496,8 @@ namespace DmcKbmMod
 
                     if (currentSection.Equals("General", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (key == "ActivePreset") cfg.ActivePreset = ParseEnum(val, cfg.ActivePreset);
+                        if (key == "Language") cfg.Language = val;
+                        else if (key == "ActivePreset") cfg.ActivePreset = ParseEnum(val, cfg.ActivePreset);
                         else if (key == "StartEnabled") cfg.StartEnabled = ParseBool(val, cfg.StartEnabled);
                         else if (key == "ShowOverlayToast") cfg.ShowOverlayToast = ParseBool(val, cfg.ShowOverlayToast);
                         else if (key == "LockCursorToGame") cfg.LockCursorToGame = ParseBool(val, cfg.LockCursorToGame);

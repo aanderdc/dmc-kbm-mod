@@ -23,7 +23,9 @@ namespace DmcKbmMod
                 if (!createdNew)
                 {
                     MessageBox.Show(
-                        "DMC KBM Mod ya se encuentra en ejecución (revisa la bandeja del sistema).",
+                        Localization.T(
+                            "DMC KBM Mod is already running (check the system tray).",
+                            "DMC KBM Mod ya se encuentra en ejecución (revisa la bandeja del sistema)."),
                         "DMC KBM Mod",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);

@@ -164,8 +164,12 @@ namespace DmcKbmMod
             if (showToast && Config.ShowOverlayToast)
             {
                 RaiseToast(
-                    ModEnabled ? "DMC KBM MOD: ACTIVADO" : "DMC KBM MOD: PAUSADO",
-                    ModEnabled ? GetPresetDisplayName(Config.ActivePreset) : "Pulsa " + ModConfig.GetInputLabel(Config.HotkeyToggleMod) + " para reactivar"
+                    ModEnabled
+                        ? Localization.T("DMC KBM MOD: ENABLED", "DMC KBM MOD: ACTIVADO")
+                        : Localization.T("DMC KBM MOD: PAUSED", "DMC KBM MOD: PAUSADO"),
+                    ModEnabled
+                        ? GetPresetDisplayName(Config.ActivePreset)
+                        : Localization.T("Press ", "Pulsa ") + ModConfig.GetInputLabel(Config.HotkeyToggleMod) + Localization.T(" to resume", " para reactivar")
                 );
             }
             RaiseStateChanged();
@@ -179,9 +183,9 @@ namespace DmcKbmMod
             if (showToast && Config.ShowOverlayToast)
             {
                 string detail = preset == PresetType.Dmc5Style
-                    ? "LMB: Espada | RMB: Estilo/Buster | Lat4/MMB: Pistola"
-                    : "LMB: Espada | RMB: Pistola | Lat4/MMB: Estilo/Buster";
-                RaiseToast("PERFIL: " + GetPresetDisplayName(preset), detail);
+                    ? Localization.T("LMB: Sword | RMB: Style/Buster | Side4/MMB: Gun", "LMB: Espada | RMB: Estilo/Buster | Lat4/MMB: Pistola")
+                    : Localization.T("LMB: Sword | RMB: Gun | Side4/MMB: Style/Buster", "LMB: Espada | RMB: Pistola | Lat4/MMB: Estilo/Buster");
+                RaiseToast(Localization.T("PRESET: ", "PERFIL: ") + GetPresetDisplayName(preset), detail);
             }
             RaiseStateChanged();
         }
@@ -205,8 +209,12 @@ namespace DmcKbmMod
             if (showToast && Config.ShowOverlayToast)
             {
                 RaiseToast(
-                    Config.MouseCameraMasterEnabled ? "CAMARA RATON: ON" : "CAMARA RATON: OFF",
-                    Config.MouseCameraMasterEnabled ? "Movimiento de raton -> Camara" : "Solo botones del raton activos"
+                    Config.MouseCameraMasterEnabled
+                        ? Localization.T("MOUSE CAMERA: ON", "CAMARA RATON: ON")
+                        : Localization.T("MOUSE CAMERA: OFF", "CAMARA RATON: OFF"),
+                    Config.MouseCameraMasterEnabled
+                        ? Localization.T("Mouse movement -> Camera", "Movimiento de raton -> Camara")
+                        : Localization.T("Mouse buttons still active", "Solo botones del raton activos")
                 );
             }
             RaiseStateChanged();
@@ -214,7 +222,7 @@ namespace DmcKbmMod
 
         public static string GetPresetDisplayName(PresetType preset)
         {
-            return preset == PresetType.Dmc5Style ? "Estilo DMC5" : "Estilo Clásico";
+            return Localization.PresetName(preset);
         }
 
         public void StartBindCapture(bool allowMouse, Action<InputCode, bool> callback)
@@ -418,7 +426,7 @@ namespace DmcKbmMod
                         if (_camHeldVkX != 0 && !isSimulated) ReleaseTargetVkLocked(_camHeldVkX);
                         _camHeldVkX = targetVk;
                         if (_camHeldVkX != 0 && !isSimulated) PressTargetVkLocked(_camHeldVkX);
-                        if (isSimulated) EmitTelemetry("Ratón " + (effX > 0 ? "→" : "←"), actX, _camHeldVkX, true);
+                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effX > 0 ? "→" : "←"), actX, _camHeldVkX, true);
                     }
                 }
 
@@ -436,7 +444,7 @@ namespace DmcKbmMod
                         if (_camHeldVkY != 0 && !isSimulated) ReleaseTargetVkLocked(_camHeldVkY);
                         _camHeldVkY = targetVk;
                         if (_camHeldVkY != 0 && !isSimulated) PressTargetVkLocked(_camHeldVkY);
-                        if (isSimulated) EmitTelemetry("Ratón " + (effY > 0 ? "↓" : "↑"), actY, _camHeldVkY, true);
+                        if (isSimulated) EmitTelemetry(Localization.T("Mouse ", "Ratón ") + (effY > 0 ? "↓" : "↑"), actY, _camHeldVkY, true);
                     }
                 }
             }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.IO;
 using System.Windows.Forms;
 
 namespace DmcKbmMod
@@ -36,22 +35,38 @@ namespace DmcKbmMod
         private ToolStripMenuItem _trayPresetDmc5Item;
         private ToolStripMenuItem _trayPresetClassicItem;
         private ToolStripMenuItem _trayCameraItem;
+        private ToolStripMenuItem _trayOpenItem;
+        private ToolStripMenuItem _trayExitItem;
 
         // Top bar controls
         private Label _lblStatusDot;
         private Label _lblStatusText;
         private Label _lblAdminWarning;
+        private Button _btnLangSwitch;
         private Button _btnRestartAdmin;
         private Button _btnMasterToggle;
 
         // Preset switch controls
+        private Label _lblSwitchTitle;
         private Button _btnPresetDmc5;
         private Button _btnPresetClassic;
         private Label _lblPresetSummary;
 
+        // Tabs
+        private TabPage _tabBindings;
+        private TabPage _tabCamera;
+        private TabPage _tabGames;
+        private TabPage _tabTester;
+
         // Bindings tab
         private Panel _bindingsScrollPanel;
         private Label _lblCaptureBanner;
+        private Button _btnResetPreset;
+        private Label _lblColAction;
+        private Label _lblColPrimary;
+        private Label _lblColSecondary;
+        private Label _lblBindingsNote;
+        private readonly Dictionary<GameAction, Label> _actionLabels = new Dictionary<GameAction, Label>();
         private readonly Dictionary<GameAction, Tuple<Button, Button>> _bindButtons = new Dictionary<GameAction, Tuple<Button, Button>>();
 
         // Camera tab
@@ -60,6 +75,11 @@ namespace DmcKbmMod
         private CheckBox _chkShowToast;
         private CheckBox _chkInvertX;
         private CheckBox _chkInvertY;
+        private Label _lblSensX;
+        private Label _lblSensY;
+        private Label _lblDeadzone;
+        private Label _lblRelease;
+        private Label _lblWheel;
         private TrackBar _trkSensX;
         private TrackBar _trkSensY;
         private TrackBar _trkDeadzone;
@@ -70,9 +90,13 @@ namespace DmcKbmMod
         private Label _lblDeadzoneVal;
         private Label _lblReleaseVal;
         private Label _lblWheelVal;
+        private Label _lblCameraTip;
         private bool _suppressUiEvents = false;
 
         // Games tab
+        private Label _lblGameSel;
+        private Label _lblGameProcs;
+        private Label _lblGameKeysSub;
         private ComboBox _cmbGameProfile;
         private TextBox _txtProcessNames;
         private CheckBox _chkGameEnableCam;
@@ -81,10 +105,12 @@ namespace DmcKbmMod
 
         // Live Tester tab
         private Button _btnToggleTestMode;
+        private Label _lblSimProfile;
+        private Button _btnClearLog;
         private ComboBox _cmbTestGame;
         private Panel _testCanvas;
         private ListBox _lstTelemetry;
-        private string _lastTesterAction = "Mueve el ratón o pulsa teclas dentro del recuadro";
+        private string _lastTesterAction = "";
 
         private bool _forceClose = false;
 
@@ -92,12 +118,15 @@ namespace DmcKbmMod
         {
             _configPath = configPath;
             _config = ModConfig.LoadOrCreate(_configPath);
+            Localization.SetLanguage(_config.Language);
+
             _engine = new InputEngine(_config);
             _toast = new OverlayToast();
+            _lastTesterAction = Localization.T("Move mouse or press keys inside the box", "Mueve el ratón o pulsa teclas dentro del recuadro");
 
             Text = "DMC KBM Mod — DMC4 / DMC4SE & DMC HD Collection";
-            Size = new Size(880, 710);
-            MinimumSize = new Size(820, 640);
+            Size = new Size(900, 710);
+            MinimumSize = new Size(840, 640);
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = BgDark;
             ForeColor = TextPrimary;
@@ -107,6 +136,7 @@ namespace DmcKbmMod
 
             BuildLayout();
             BuildTrayIcon();
+            ApplyLocalization();
 
             _engine.StateChanged += () => SafeInvoke(RefreshAllUiState);
             _engine.ToastRequested += (t, s) => SafeInvoke(() => _toast.ShowMessage(t, s));
@@ -135,7 +165,11 @@ namespace DmcKbmMod
                 if (WindowState == FormWindowState.Minimized)
                 {
                     Hide();
-                    _trayIcon.ShowBalloonTip(1500, "DMC KBM Mod", "Ejecutándose en segundo plano (bandeja del sistema).", ToolTipIcon.Info);
+                    _trayIcon.ShowBalloonTip(
+                        1500,
+                        "DMC KBM Mod",
+                        Localization.T("Running in background (system tray).", "Ejecutándose en segundo plano (bandeja del sistema)."),
+                        ToolTipIcon.Info);
                 }
             };
             Move += (s, e) => UpdateTestCanvasBounds();
@@ -200,6 +234,94 @@ namespace DmcKbmMod
             try { _config.Save(_configPath); } catch { }
         }
 
+        private void ToggleLanguage()
+        {
+            AppLanguage next = Localization.IsEs ? AppLanguage.En : AppLanguage.Es;
+            Localization.SetLanguage(next);
+            _config.Language = next == AppLanguage.Es ? "es" : "en";
+            SaveConfigSafe();
+            ApplyLocalization();
+            RefreshAllUiState();
+            RefreshSelectedGameProfileUi();
+            if (_testCanvas != null) _testCanvas.Invalidate();
+        }
+
+        private void ApplyLocalization()
+        {
+            _btnLangSwitch.Text = Localization.IsEs ? "ES ⇄ EN" : "EN ⇄ ES";
+            _lblAdminWarning.Text = Localization.T("⚠ Game running as Admin", "⚠ Juego ejecutado como Admin");
+            _btnRestartAdmin.Text = Localization.T("Run as Admin", "Reiniciar Admin");
+
+            _lblSwitchTitle.Text = Localization.T(
+                "CONTROL SCHEME (Quick in-game switch: F2)",
+                "ESQUEMA DE CONTROLES (Switch rápido en juego: F2)");
+            _btnPresetDmc5.Text = Localization.T(
+                "DMC5 Style  (LMB Sword · RMB Style)",
+                "Estilo DMC5  (LMB Espada · RMB Estilo)");
+            _btnPresetClassic.Text = Localization.T(
+                "Classic Style  (LMB Sword · RMB Gun)",
+                "Estilo Clásico  (LMB Espada · RMB Pistola)");
+            _lblPresetSummary.Text = Localization.T(
+                "F1: Enable/Pause   |   F2: Switch preset   |   F3: Mouse camera",
+                "F1: Activar/Pausar   |   F2: Cambiar estilo   |   F3: Cámara ratón");
+
+            _tabBindings.Text = Localization.T("Controls (Preset)", "Controles (Preset)");
+            _tabCamera.Text = Localization.T("Camera & Mouse", "Cámara y Ratón");
+            _tabGames.Text = Localization.T("Game Profiles", "Perfiles por Juego");
+            _tabTester.Text = Localization.T("Live Tester", "Probador en Vivo");
+
+            _lblCaptureBanner.Text = Localization.T(
+                "Click a button to rebind (mouse, wheel, or keyboard). Press Del to clear or Esc to cancel.",
+                "Haz clic en un botón para reasignar (ratón, rueda o teclado). Pulsa Supr para limpiar o Esc para cancelar.");
+            _btnResetPreset.Text = Localization.T("Reset preset", "Restaurar preset");
+            _lblColAction.Text = Localization.T("ACTION", "ACCIÓN");
+            _lblColPrimary.Text = Localization.T("PRIMARY INPUT", "ENTRADA PRINCIPAL");
+            _lblColSecondary.Text = Localization.T("SECONDARY INPUT", "ENTRADA SECUNDARIA");
+            foreach (var kv in _actionLabels)
+                kv.Value.Text = ModConfig.GetActionLabel(kv.Key);
+            _lblBindingsNote.Text = Localization.T(
+                "Note: Movement (W, A, S, D) and Dante Styles (1, 2, 3, 4 in DMC4 / DDMK) pass natively to the game with zero latency.",
+                "Nota: Movimiento (W, A, S, D) y Estilos de Dante (1, 2, 3, 4 en DMC4 / DDMK) pasan de forma nativa al juego sin latencia.");
+
+            _chkCamMaster.Text = Localization.T("Enable mouse camera control (In-game hotkey: F3)", "Activar control de cámara con el ratón (Atajo en juego: F3)");
+            _chkLockCursor.Text = Localization.T("Confine cursor inside the game window (prevents multi-monitor escape)", "Confinar cursor dentro de la ventana del juego (evita salir a otro monitor)");
+            _chkShowToast.Text = Localization.T("Show floating HUD toast when switching DMC5 / Classic preset or pausing", "Mostrar aviso flotante en pantalla al cambiar entre Estilo DMC5 / Clásico o pausar");
+            _chkInvertX.Text = Localization.T("Invert X axis", "Invertir eje X");
+            _chkInvertY.Text = Localization.T("Invert Y axis", "Invertir eje Y");
+            _lblSensX.Text = Localization.T("Horizontal Sensitivity (X):", "Sensibilidad Horizontal (X):");
+            _lblSensY.Text = Localization.T("Vertical Sensitivity (Y):", "Sensibilidad Vertical (Y):");
+            _lblDeadzone.Text = Localization.T("Mouse Deadzone:", "Zona muerta del ratón (Deadzone):");
+            _lblRelease.Text = Localization.T("Camera hold smoothing (ms):", "Suavizado de retención de cámara (ms):");
+            _lblWheel.Text = Localization.T("Mouse wheel pulse duration (ms):", "Duración pulso rueda del ratón (ms):");
+            _lblCameraTip.Text = Localization.T(
+                "Tip: DMC4/DMC4SE have free camera in most areas (X + Y). In DMC3, horizontal-only usually feels best (configurable per game in 'Game Profiles').",
+                "Consejo: DMC4/DMC4SE tienen cámara libre en casi todas las zonas (X + Y). En DMC3 suele sentirse mejor solo Horizontal (configurable por juego en 'Perfiles por Juego').");
+
+            _lblGameSel.Text = Localization.T("Game:", "Juego:");
+            _lblGameProcs.Text = Localization.T("Processes (.exe without extension, comma-separated):", "Procesos (.exe sin extensión, separados por coma):");
+            _chkGameEnableCam.Text = Localization.T("Enable mouse camera for this game", "Activar cámara por ratón en este juego");
+            _chkGameHorizOnly.Text = Localization.T("Horizontal movement only (recommended for DMC1/2/3)", "Solo movimiento horizontal (recomendado en DMC1/2/3)");
+            _lblGameKeysSub.Text = Localization.T(
+                "  In-game target keys (only edit these if you rebound keys inside the game's own options):",
+                "  Teclas reales configuradas dentro del juego (solo cámbialas si modificaste los controles dentro del menú del juego):");
+
+            _btnToggleTestMode.Text = _engine.TestModeActive
+                ? Localization.T("■ Stop Test Mode", "■ Detener Modo Prueba")
+                : Localization.T("▶ Start Local Test Mode", "▶ Activar Modo Prueba Local");
+            _lblSimProfile.Text = Localization.T("Simulate profile:", "Simular perfil:");
+            _btnClearLog.Text = Localization.T("Clear log", "Limpiar log");
+
+            if (_trayToggleItem != null)
+            {
+                _trayToggleItem.Text = Localization.T("Mod Enabled (F1)", "Mod Activado (F1)");
+                _trayPresetDmc5Item.Text = Localization.T("Preset: DMC5 Style", "Esquema: Estilo DMC5");
+                _trayPresetClassicItem.Text = Localization.T("Preset: Classic Style", "Esquema: Estilo Clásico");
+                _trayCameraItem.Text = Localization.T("Mouse Camera (F3)", "Cámara con Ratón (F3)");
+                _trayOpenItem.Text = Localization.T("Open Window", "Abrir Ventana");
+                _trayExitItem.Text = Localization.T("Exit", "Salir");
+            }
+        }
+
         private void BuildLayout()
         {
             // 1. Header / Status Bar
@@ -236,7 +358,7 @@ namespace DmcKbmMod
 
             _lblStatusText = new Label
             {
-                Text = "En espera — Abre DMC4, DMC4SE o DMC HD Collection (DMC1/2/3)",
+                Text = "",
                 Font = new Font("Segoe UI", 9.5f),
                 ForeColor = TextMuted,
                 AutoSize = true,
@@ -245,24 +367,29 @@ namespace DmcKbmMod
 
             _lblAdminWarning = new Label
             {
-                Text = "⚠ Juego ejecutado como Admin",
+                Text = "",
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                 ForeColor = AccentAmber,
                 AutoSize = true,
                 Visible = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(490, 44)
+                Location = new Point(445, 56)
             };
 
-            _btnRestartAdmin = CreateStyledButton("Reiniciar Admin", BgInput, 118, 30);
+            _btnLangSwitch = CreateStyledButton("EN ⇄ ES", BgInput, 76, 32);
+            _btnLangSwitch.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _btnLangSwitch.Location = new Point(494, 22);
+            _btnLangSwitch.Click += (s, e) => ToggleLanguage();
+
+            _btnRestartAdmin = CreateStyledButton("Run as Admin", BgInput, 118, 32);
             _btnRestartAdmin.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _btnRestartAdmin.Location = new Point(565, 24);
+            _btnRestartAdmin.Location = new Point(578, 22);
             _btnRestartAdmin.Visible = !NativeInput.IsCurrentProcessAdmin();
             _btnRestartAdmin.Click += (s, e) => RestartAsAdmin();
 
-            _btnMasterToggle = CreateStyledButton("MOD: ACTIVO (F1)", AccentGreen, 155, 36);
+            _btnMasterToggle = CreateStyledButton("MOD: ON (F1)", AccentGreen, 162, 36);
             _btnMasterToggle.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _btnMasterToggle.Location = new Point(692, 21);
+            _btnMasterToggle.Location = new Point(704, 20);
             _btnMasterToggle.Click += (s, e) =>
             {
                 _engine.SetModEnabled(!_engine.ModEnabled, false);
@@ -272,7 +399,7 @@ namespace DmcKbmMod
 
             headerPanel.Controls.AddRange(new Control[]
             {
-                lblTitle, _lblStatusDot, _lblStatusText, _lblAdminWarning, _btnRestartAdmin, _btnMasterToggle
+                lblTitle, _lblStatusDot, _lblStatusText, _lblAdminWarning, _btnLangSwitch, _btnRestartAdmin, _btnMasterToggle
             });
 
             // 2. Prominent Dual-Preset Switch Bar
@@ -284,16 +411,16 @@ namespace DmcKbmMod
                 Padding = new Padding(16, 10, 16, 10)
             };
 
-            var lblSwitchTitle = new Label
+            _lblSwitchTitle = new Label
             {
-                Text = "ESQUEMA DE CONTROLES (Switch rápido en juego: F2)",
+                Text = "",
                 Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
                 ForeColor = TextMuted,
                 AutoSize = true,
                 Location = new Point(16, 8)
             };
 
-            _btnPresetDmc5 = CreateStyledButton("Estilo DMC5  (LMB Espada · RMB Estilo)", AccentCrimson, 290, 36);
+            _btnPresetDmc5 = CreateStyledButton("", AccentCrimson, 290, 36);
             _btnPresetDmc5.Location = new Point(16, 29);
             _btnPresetDmc5.Click += (s, e) =>
             {
@@ -301,7 +428,7 @@ namespace DmcKbmMod
                 SaveConfigSafe();
             };
 
-            _btnPresetClassic = CreateStyledButton("Estilo Clásico  (LMB Espada · RMB Pistola)", BgInput, 290, 36);
+            _btnPresetClassic = CreateStyledButton("", BgInput, 290, 36);
             _btnPresetClassic.Location = new Point(314, 29);
             _btnPresetClassic.Click += (s, e) =>
             {
@@ -311,18 +438,18 @@ namespace DmcKbmMod
 
             _lblPresetSummary = new Label
             {
-                Text = "F1: Activar/Pausar   |   F2: Cambiar estilo   |   F3: Cámara ratón",
+                Text = "",
                 Font = new Font("Segoe UI", 8.3f),
                 ForeColor = TextMuted,
                 AutoSize = false,
-                Size = new Size(240, 42),
+                Size = new Size(255, 42),
                 Location = new Point(618, 26),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
 
             switchBar.Controls.AddRange(new Control[]
             {
-                lblSwitchTitle, _btnPresetDmc5, _btnPresetClassic, _lblPresetSummary
+                _lblSwitchTitle, _btnPresetDmc5, _btnPresetClassic, _lblPresetSummary
             });
 
             // 3. Main Tabs
@@ -333,27 +460,26 @@ namespace DmcKbmMod
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
             };
 
-            var tabBindings = new TabPage("Controles (Preset)") { BackColor = BgDark, ForeColor = TextPrimary };
-            var tabCamera = new TabPage("Cámara y Ratón") { BackColor = BgDark, ForeColor = TextPrimary };
-            var tabGames = new TabPage("Perfiles por Juego") { BackColor = BgDark, ForeColor = TextPrimary };
-            var tabTester = new TabPage("Probador en Vivo") { BackColor = BgDark, ForeColor = TextPrimary };
+            _tabBindings = new TabPage { BackColor = BgDark, ForeColor = TextPrimary };
+            _tabCamera = new TabPage { BackColor = BgDark, ForeColor = TextPrimary };
+            _tabGames = new TabPage { BackColor = BgDark, ForeColor = TextPrimary };
+            _tabTester = new TabPage { BackColor = BgDark, ForeColor = TextPrimary };
 
-            BuildBindingsTab(tabBindings);
-            BuildCameraTab(tabCamera);
-            BuildGamesTab(tabGames);
-            BuildTesterTab(tabTester);
+            BuildBindingsTab(_tabBindings);
+            BuildCameraTab(_tabCamera);
+            BuildGamesTab(_tabGames);
+            BuildTesterTab(_tabTester);
 
-            tabs.TabPages.AddRange(new[] { tabBindings, tabCamera, tabGames, tabTester });
+            tabs.TabPages.AddRange(new[] { _tabBindings, _tabCamera, _tabGames, _tabTester });
             tabs.SelectedIndexChanged += (s, e) =>
             {
-                if (tabs.SelectedTab != tabTester && _engine.TestModeActive)
+                if (tabs.SelectedTab != _tabTester && _engine.TestModeActive)
                 {
                     SetTestMode(false);
                 }
                 UpdateTestCanvasBounds();
             };
 
-            // Add in correct Dock order (Fill last -> added first in WinForms Z-order, Top panels added after)
             Controls.Add(tabs);
             Controls.Add(switchBar);
             Controls.Add(headerPanel);
@@ -365,17 +491,17 @@ namespace DmcKbmMod
 
             _lblCaptureBanner = new Label
             {
-                Text = "Haz clic en un botón para reasignar (ratón, rueda o teclado). Pulsa Supr para limpiar o Esc para cancelar.",
+                Text = "",
                 ForeColor = TextMuted,
                 Font = new Font("Segoe UI", 8.8f),
                 AutoSize = true,
                 Location = new Point(14, 14)
             };
 
-            var btnReset = CreateStyledButton("Restaurar preset", BgInput, 138, 30);
-            btnReset.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnReset.Location = new Point(700, 8);
-            btnReset.Click += (s, e) =>
+            _btnResetPreset = CreateStyledButton("", BgInput, 138, 30);
+            _btnResetPreset.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _btnResetPreset.Location = new Point(720, 8);
+            _btnResetPreset.Click += (s, e) =>
             {
                 if (_config.ActivePreset == PresetType.Dmc5Style)
                     _config.Dmc5Preset = ModConfig.CreateDefaultDmc5Preset();
@@ -387,12 +513,13 @@ namespace DmcKbmMod
             };
 
             topBar.Controls.Add(_lblCaptureBanner);
-            topBar.Controls.Add(btnReset);
+            topBar.Controls.Add(_btnResetPreset);
 
             var colHeader = new Panel { Dock = DockStyle.Top, Height = 28, BackColor = BgCard };
-            colHeader.Controls.Add(new Label { Text = "ACCIÓN", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(18, 6), AutoSize = true });
-            colHeader.Controls.Add(new Label { Text = "ENTRADA PRINCIPAL", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(290, 6), AutoSize = true });
-            colHeader.Controls.Add(new Label { Text = "ENTRADA SECUNDARIA", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(510, 6), AutoSize = true });
+            _lblColAction = new Label { Text = "", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(18, 6), AutoSize = true };
+            _lblColPrimary = new Label { Text = "", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(290, 6), AutoSize = true };
+            _lblColSecondary = new Label { Text = "", ForeColor = TextMuted, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), Location = new Point(510, 6), AutoSize = true };
+            colHeader.Controls.AddRange(new Control[] { _lblColAction, _lblColPrimary, _lblColSecondary });
 
             _bindingsScrollPanel = new Panel
             {
@@ -408,7 +535,7 @@ namespace DmcKbmMod
                 var row = new Panel
                 {
                     Location = new Point(8, y),
-                    Size = new Size(810, 38),
+                    Size = new Size(830, 38),
                     BackColor = BgCard,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
                 };
@@ -433,20 +560,20 @@ namespace DmcKbmMod
 
                 row.Controls.AddRange(new Control[] { lblAct, btnPrimary, btnSecondary });
                 _bindingsScrollPanel.Controls.Add(row);
+                _actionLabels[action] = lblAct;
                 _bindButtons[action] = Tuple.Create(btnPrimary, btnSecondary);
                 y += 43;
             }
 
-            // Helpful footer note about WASD & Dante Styles
-            var lblNote = new Label
+            _lblBindingsNote = new Label
             {
-                Text = "Nota: Movimiento (W, A, S, D) y Estilos de Dante (1, 2, 3, 4 en DMC4 / DDMK) pasan de forma nativa al juego sin latencia.",
+                Text = "",
                 ForeColor = TextMuted,
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
                 Location = new Point(12, y + 6),
                 AutoSize = true
             };
-            _bindingsScrollPanel.Controls.Add(lblNote);
+            _bindingsScrollPanel.Controls.Add(_lblBindingsNote);
 
             page.Controls.Add(_bindingsScrollPanel);
             page.Controls.Add(colHeader);
@@ -455,14 +582,18 @@ namespace DmcKbmMod
 
         private void BeginCapturePresetBind(GameAction action, bool isPrimary, Button targetBtn)
         {
-            targetBtn.Text = "[ Pulsa tecla o ratón... ]";
+            targetBtn.Text = Localization.T("[ Press key or mouse... ]", "[ Pulsa tecla o ratón... ]");
             targetBtn.BackColor = AccentBlue;
-            _lblCaptureBanner.Text = "Esperando entrada para \"" + ModConfig.GetActionLabel(action) + "\"... (Esc: cancelar | Supr: borrar)";
+            _lblCaptureBanner.Text = Localization.T(
+                "Waiting for input for \"" + ModConfig.GetActionLabel(action) + "\"... (Esc: cancel | Del: clear)",
+                "Esperando entrada para \"" + ModConfig.GetActionLabel(action) + "\"... (Esc: cancelar | Supr: borrar)");
             _lblCaptureBanner.ForeColor = AccentAmber;
 
             _engine.StartBindCapture(true, (code, cancelled) => SafeInvoke(() =>
             {
-                _lblCaptureBanner.Text = "Haz clic en un botón para reasignar (ratón, rueda o teclado). Pulsa Supr para limpiar o Esc para cancelar.";
+                _lblCaptureBanner.Text = Localization.T(
+                    "Click a button to rebind (mouse, wheel, or keyboard). Press Del to clear or Esc to cancel.",
+                    "Haz clic en un botón para reasignar (ratón, rueda o teclado). Pulsa Supr para limpiar o Esc para cancelar.");
                 _lblCaptureBanner.ForeColor = TextMuted;
 
                 if (!cancelled)
@@ -488,12 +619,12 @@ namespace DmcKbmMod
         {
             var container = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(20), BackColor = BgDark };
 
-            var cardToggles = new Panel { Location = new Point(18, 16), Size = new Size(805, 130), BackColor = BgCard };
-            _chkCamMaster = CreateCheckBox("Activar control de cámara con el ratón (Atajo en juego: F3)", 16, 14);
-            _chkLockCursor = CreateCheckBox("Confinar cursor dentro de la ventana del juego (evita salir a otro monitor)", 16, 44);
-            _chkShowToast = CreateCheckBox("Mostrar aviso flotante en pantalla al cambiar entre Estilo DMC5 / Clásico o pausar", 16, 74);
-            _chkInvertX = CreateCheckBox("Invertir eje X", 420, 14);
-            _chkInvertY = CreateCheckBox("Invertir eje Y", 570, 14);
+            var cardToggles = new Panel { Location = new Point(18, 16), Size = new Size(825, 130), BackColor = BgCard };
+            _chkCamMaster = CreateCheckBox("", 16, 14);
+            _chkLockCursor = CreateCheckBox("", 16, 44);
+            _chkShowToast = CreateCheckBox("", 16, 74);
+            _chkInvertX = CreateCheckBox("", 460, 14);
+            _chkInvertY = CreateCheckBox("", 605, 14);
 
             EventHandler onToggleChanged = (s, e) =>
             {
@@ -515,13 +646,13 @@ namespace DmcKbmMod
 
             cardToggles.Controls.AddRange(new Control[] { _chkCamMaster, _chkLockCursor, _chkShowToast, _chkInvertX, _chkInvertY });
 
-            var cardSliders = new Panel { Location = new Point(18, 162), Size = new Size(805, 310), BackColor = BgCard };
+            var cardSliders = new Panel { Location = new Point(18, 162), Size = new Size(825, 310), BackColor = BgCard };
 
-            AddSliderRow(cardSliders, 18, "Sensibilidad Horizontal (X):", 10, 400, out _trkSensX, out _lblSensXVal);
-            AddSliderRow(cardSliders, 72, "Sensibilidad Vertical (Y):", 10, 400, out _trkSensY, out _lblSensYVal);
-            AddSliderRow(cardSliders, 126, "Zona muerta del ratón (Deadzone):", 0, 20, out _trkDeadzone, out _lblDeadzoneVal);
-            AddSliderRow(cardSliders, 180, "Suavizado de retención de cámara (ms):", 20, 150, out _trkReleaseMs, out _lblReleaseVal);
-            AddSliderRow(cardSliders, 234, "Duración pulso rueda del ratón (ms):", 25, 120, out _trkWheelMs, out _lblWheelVal);
+            AddSliderRow(cardSliders, 18, 10, 400, out _lblSensX, out _trkSensX, out _lblSensXVal);
+            AddSliderRow(cardSliders, 72, 10, 400, out _lblSensY, out _trkSensY, out _lblSensYVal);
+            AddSliderRow(cardSliders, 126, 0, 20, out _lblDeadzone, out _trkDeadzone, out _lblDeadzoneVal);
+            AddSliderRow(cardSliders, 180, 20, 150, out _lblRelease, out _trkReleaseMs, out _lblReleaseVal);
+            AddSliderRow(cardSliders, 234, 25, 120, out _lblWheel, out _trkWheelMs, out _lblWheelVal);
 
             EventHandler onSliderChanged = (s, e) =>
             {
@@ -541,24 +672,24 @@ namespace DmcKbmMod
             _trkReleaseMs.ValueChanged += onSliderChanged;
             _trkWheelMs.ValueChanged += onSliderChanged;
 
-            var lblTip = new Label
+            _lblCameraTip = new Label
             {
-                Text = "Consejo: DMC4/DMC4SE tienen cámara libre en casi todas las zonas (X + Y). En DMC3 suele sentirse mejor solo Horizontal (configurable por juego en la pestaña 'Perfiles por Juego').",
+                Text = "",
                 ForeColor = TextMuted,
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
                 Location = new Point(18, 482),
-                Size = new Size(805, 36)
+                Size = new Size(825, 36)
             };
 
-            container.Controls.AddRange(new Control[] { cardToggles, cardSliders, lblTip });
+            container.Controls.AddRange(new Control[] { cardToggles, cardSliders, _lblCameraTip });
             page.Controls.Add(container);
         }
 
-        private void AddSliderRow(Panel parent, int y, string label, int min, int max, out TrackBar track, out Label valLabel)
+        private void AddSliderRow(Panel parent, int y, int min, int max, out Label lbl, out TrackBar track, out Label valLabel)
         {
-            var lbl = new Label
+            lbl = new Label
             {
-                Text = label,
+                Text = "",
                 ForeColor = TextPrimary,
                 Font = new Font("Segoe UI", 9.5f),
                 Location = new Point(18, y + 6),
@@ -570,7 +701,7 @@ namespace DmcKbmMod
                 Maximum = max,
                 TickStyle = TickStyle.None,
                 Location = new Point(316, y),
-                Size = new Size(370, 38),
+                Size = new Size(380, 38),
                 BackColor = BgCard
             };
             valLabel = new Label
@@ -578,7 +709,7 @@ namespace DmcKbmMod
                 Text = "",
                 ForeColor = AccentCrimsonHover,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Location = new Point(698, y + 6),
+                Location = new Point(708, y + 6),
                 Size = new Size(90, 24)
             };
             parent.Controls.AddRange(new Control[] { lbl, track, valLabel });
@@ -588,7 +719,7 @@ namespace DmcKbmMod
         {
             var topCard = new Panel { Dock = DockStyle.Top, Height = 122, BackColor = BgCard, Padding = new Padding(16) };
 
-            var lblSel = new Label { Text = "Juego:", ForeColor = TextMuted, Location = new Point(16, 16), AutoSize = true };
+            _lblGameSel = new Label { Text = "", ForeColor = TextMuted, Location = new Point(16, 16), AutoSize = true };
             _cmbGameProfile = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
@@ -601,19 +732,19 @@ namespace DmcKbmMod
             _cmbGameProfile.SelectedIndex = 0;
             _cmbGameProfile.SelectedIndexChanged += (s, e) => RefreshSelectedGameProfileUi();
 
-            var lblProcs = new Label { Text = "Procesos (.exe sin extensión, separados por coma):", ForeColor = TextMuted, Location = new Point(400, 16), AutoSize = true };
+            _lblGameProcs = new Label { Text = "", ForeColor = TextMuted, Location = new Point(400, 16), AutoSize = true };
             _txtProcessNames = new TextBox
             {
                 BackColor = BgInput,
                 ForeColor = TextPrimary,
                 BorderStyle = BorderStyle.FixedSingle,
                 Location = new Point(400, 40),
-                Size = new Size(415, 26)
+                Size = new Size(430, 26)
             };
             _txtProcessNames.Leave += (s, e) => SaveSelectedGameProcessNames();
 
-            _chkGameEnableCam = CreateCheckBox("Activar cámara por ratón en este juego", 16, 52);
-            _chkGameHorizOnly = CreateCheckBox("Solo movimiento horizontal (recomendado en DMC1/2/3)", 16, 82);
+            _chkGameEnableCam = CreateCheckBox("", 16, 52);
+            _chkGameHorizOnly = CreateCheckBox("", 16, 82);
 
             _chkGameEnableCam.CheckedChanged += (s, e) =>
             {
@@ -635,14 +766,14 @@ namespace DmcKbmMod
 
             topCard.Controls.AddRange(new Control[]
             {
-                lblSel, _cmbGameProfile, lblProcs, _txtProcessNames, _chkGameEnableCam, _chkGameHorizOnly
+                _lblGameSel, _cmbGameProfile, _lblGameProcs, _txtProcessNames, _chkGameEnableCam, _chkGameHorizOnly
             });
 
-            var lblSub = new Label
+            _lblGameKeysSub = new Label
             {
                 Dock = DockStyle.Top,
                 Height = 28,
-                Text = "  Teclas reales configuradas dentro del juego (solo cámbialas si modificaste los controles dentro del menú del juego):",
+                Text = "",
                 ForeColor = TextMuted,
                 Font = new Font("Segoe UI", 8.5f),
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -658,7 +789,7 @@ namespace DmcKbmMod
             };
 
             page.Controls.Add(_gameKeysPanel);
-            page.Controls.Add(lblSub);
+            page.Controls.Add(_lblGameKeysSub);
             page.Controls.Add(topCard);
 
             RefreshSelectedGameProfileUi();
@@ -707,7 +838,7 @@ namespace DmcKbmMod
                 var row = new Panel
                 {
                     Location = new Point(8, y),
-                    Size = new Size(805, 34),
+                    Size = new Size(825, 34),
                     BackColor = BgCard
                 };
 
@@ -727,7 +858,7 @@ namespace DmcKbmMod
                 GameAction capAct = action;
                 btnKey.Click += (s, e) =>
                 {
-                    btnKey.Text = "[ Pulsa tecla del juego... ]";
+                    btnKey.Text = Localization.T("[ Press game key... ]", "[ Pulsa tecla del juego... ]");
                     btnKey.BackColor = AccentBlue;
                     _engine.StartBindCapture(false, (code, cancelled) => SafeInvoke(() =>
                     {
@@ -762,17 +893,17 @@ namespace DmcKbmMod
         {
             var topPanel = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = BgCard, Padding = new Padding(14) };
 
-            _btnToggleTestMode = CreateStyledButton("▶ Activar Modo Prueba Local", AccentCrimson, 220, 34);
+            _btnToggleTestMode = CreateStyledButton("", AccentCrimson, 220, 34);
             _btnToggleTestMode.Location = new Point(14, 11);
             _btnToggleTestMode.Click += (s, e) => SetTestMode(!_engine.TestModeActive);
 
-            var lblSim = new Label { Text = "Simular perfil:", ForeColor = TextMuted, Location = new Point(252, 18), AutoSize = true };
+            _lblSimProfile = new Label { Text = "", ForeColor = TextMuted, Location = new Point(252, 18), AutoSize = true };
             _cmbTestGame = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = BgInput,
                 ForeColor = TextPrimary,
-                Location = new Point(345, 14),
+                Location = new Point(365, 14),
                 Size = new Size(270, 28)
             };
             foreach (var g in _config.Games) _cmbTestGame.Items.Add(g.DisplayName);
@@ -783,11 +914,11 @@ namespace DmcKbmMod
                     _engine.TestModeProfile = _config.Games[_cmbTestGame.SelectedIndex];
             };
 
-            var btnClear = CreateStyledButton("Limpiar log", BgInput, 100, 32);
-            btnClear.Location = new Point(718, 12);
-            btnClear.Click += (s, e) => _lstTelemetry.Items.Clear();
+            _btnClearLog = CreateStyledButton("", BgInput, 100, 32);
+            _btnClearLog.Location = new Point(738, 12);
+            _btnClearLog.Click += (s, e) => _lstTelemetry.Items.Clear();
 
-            topPanel.Controls.AddRange(new Control[] { _btnToggleTestMode, lblSim, _cmbTestGame, btnClear });
+            topPanel.Controls.AddRange(new Control[] { _btnToggleTestMode, _lblSimProfile, _cmbTestGame, _btnClearLog });
 
             var body = new Panel { Dock = DockStyle.Fill, BackColor = BgDark, Padding = new Padding(14) };
 
@@ -798,7 +929,6 @@ namespace DmcKbmMod
                 BackColor = Color.FromArgb(24, 24, 34),
                 BorderStyle = BorderStyle.FixedSingle
             };
-            // Enable double buffering on panel via reflection to eliminate flicker
             typeof(Panel).InvokeMember("DoubleBuffered",
                 System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
                 null, _testCanvas, new object[] { true });
@@ -807,7 +937,7 @@ namespace DmcKbmMod
             _lstTelemetry = new ListBox
             {
                 Location = new Point(368, 14),
-                Size = new Size(462, 370),
+                Size = new Size(482, 370),
                 BackColor = Color.FromArgb(14, 14, 20),
                 ForeColor = Color.FromArgb(215, 225, 240),
                 Font = new Font("Consolas", 8.8f),
@@ -826,12 +956,18 @@ namespace DmcKbmMod
         {
             _engine.TestModeActive = active;
             UpdateTestCanvasBounds();
-            _btnToggleTestMode.Text = active ? "■ Detener Modo Prueba" : "▶ Activar Modo Prueba Local";
+            _btnToggleTestMode.Text = active
+                ? Localization.T("■ Stop Test Mode", "■ Detener Modo Prueba")
+                : Localization.T("▶ Start Local Test Mode", "▶ Activar Modo Prueba Local");
             _btnToggleTestMode.BackColor = active ? AccentGreen : AccentCrimson;
             if (active)
             {
-                _lstTelemetry.Items.Insert(0, "--- Modo Prueba ACTIVADO (" + InputEngine.GetPresetDisplayName(_config.ActivePreset) + ") ---");
-                _lstTelemetry.Items.Insert(1, "Haz clic/rueda/mueve ratón dentro del cuadro izquierdo o pulsa Espacio/Shift/Q/E/F/R.");
+                _lstTelemetry.Items.Insert(0, Localization.T(
+                    "--- Test Mode ACTIVE (" + InputEngine.GetPresetDisplayName(_config.ActivePreset) + ") ---",
+                    "--- Modo Prueba ACTIVADO (" + InputEngine.GetPresetDisplayName(_config.ActivePreset) + ") ---"));
+                _lstTelemetry.Items.Insert(1, Localization.T(
+                    "Click/scroll/move mouse inside the left box or press Space/Shift/Q/E/F/R.",
+                    "Haz clic/rueda/mueve ratón dentro del cuadro izquierdo o pulsa Espacio/Shift/Q/E/F/R."));
             }
             else
             {
@@ -867,7 +1003,6 @@ namespace DmcKbmMod
             int cy = _testCanvas.Height / 2 - 15;
             int radius = 92;
 
-            // Radar ring
             using (var ringPen = new Pen(_engine.TestModeActive ? AccentCrimson : BorderColor, 2))
                 g.DrawEllipse(ringPen, cx - radius, cy - radius, radius * 2, radius * 2);
 
@@ -877,13 +1012,11 @@ namespace DmcKbmMod
                 g.DrawLine(crossPen, cx, cy - radius, cx, cy + radius);
             }
 
-            // Direction arrows highlight
             DrawDirBadge(g, cx, cy - radius - 18, "▲", _engine.CameraDirY < 0);
             DrawDirBadge(g, cx, cy + radius + 18, "▼", _engine.CameraDirY > 0);
             DrawDirBadge(g, cx - radius - 22, cy, "◀", _engine.CameraDirX < 0);
             DrawDirBadge(g, cx + radius + 22, cy, "▶", _engine.CameraDirX > 0);
 
-            // Live vector dot
             int dotX = cx + (int)(_engine.CameraImpulseX * (radius - 16));
             int dotY = cy + (int)(_engine.CameraImpulseY * (radius - 16));
             using (var vecPen = new Pen(AccentCrimsonHover, 2.5f))
@@ -891,17 +1024,17 @@ namespace DmcKbmMod
             using (var dotBrush = new SolidBrush(_engine.TestModeActive ? AccentCrimsonHover : TextMuted))
                 g.FillEllipse(dotBrush, dotX - 8, dotY - 8, 16, 16);
 
-            // Footer text inside canvas
             using (var fTitle = new Font("Segoe UI", 9.5f, FontStyle.Bold))
             using (var fSub = new Font("Segoe UI", 8.2f))
             using (var brTitle = new SolidBrush(TextPrimary))
             using (var brSub = new SolidBrush(TextMuted))
             {
                 var sf = new StringFormat { Alignment = StringAlignment.Center };
-                g.DrawString(_engine.TestModeActive ? "ZONA DE PRUEBA ACTIVA" : "ZONA DE PRUEBA (INACTIVA)",
-                    fTitle, brTitle, new RectangleF(8, 10, _testCanvas.Width - 16, 22), sf);
-                g.DrawString(_lastTesterAction,
-                    fSub, brSub, new RectangleF(10, _testCanvas.Height - 44, _testCanvas.Width - 20, 36), sf);
+                string header = _engine.TestModeActive
+                    ? Localization.T("TEST ZONE ACTIVE", "ZONA DE PRUEBA ACTIVA")
+                    : Localization.T("TEST ZONE (INACTIVE)", "ZONA DE PRUEBA (INACTIVA)");
+                g.DrawString(header, fTitle, brTitle, new RectangleF(8, 10, _testCanvas.Width - 16, 22), sf);
+                g.DrawString(_lastTesterAction, fSub, brSub, new RectangleF(10, _testCanvas.Height - 44, _testCanvas.Width - 20, 36), sf);
             }
         }
 
@@ -918,8 +1051,9 @@ namespace DmcKbmMod
         private void OnTelemetryEvent(LiveInputTelemetry ev)
         {
             string state = ev.IsDown ? "DOWN" : "UP  ";
-            string line = string.Format("[{0}] {1} {2,-16} -> {3,-26} => Tecla {4,-12} (Scan {5})",
-                ev.Timestamp, state, ev.PhysicalInput, ev.ActionName, ev.TargetKey, ev.ScanCodeHex);
+            string keyWord = Localization.T("Key", "Tecla");
+            string line = string.Format("[{0}] {1} {2,-16} -> {3,-26} => {4} {5,-12} (Scan {6})",
+                ev.Timestamp, state, ev.PhysicalInput, ev.ActionName, keyWord, ev.TargetKey, ev.ScanCodeHex);
 
             _lastTesterAction = ev.PhysicalInput + "  →  " + ev.ActionName + " (" + ev.TargetKey + ")";
             _lstTelemetry.Items.Insert(0, line);
@@ -930,39 +1064,43 @@ namespace DmcKbmMod
 
         private void RefreshAllUiState()
         {
-            // Status bar
             if (!_engine.ModEnabled)
             {
                 _lblStatusDot.ForeColor = AccentCrimson;
-                _lblStatusText.Text = "PAUSADO — Pulsa F1 o el botón derecho para reactivar";
-                _btnMasterToggle.Text = "MOD: PAUSADO (F1)";
+                _lblStatusText.Text = Localization.T(
+                    "PAUSED — Press F1 or click the button to resume",
+                    "PAUSADO — Pulsa F1 o el botón derecho para reactivar");
+                _btnMasterToggle.Text = Localization.T("MOD: PAUSED (F1)", "MOD: PAUSADO (F1)");
                 _btnMasterToggle.BackColor = AccentCrimson;
             }
             else if (_engine.ActiveGame != null)
             {
                 _lblStatusDot.ForeColor = AccentGreen;
-                _lblStatusText.Text = "ACTIVO en " + _engine.ActiveGame.DisplayName + " (" + _engine.ActiveProcessName + ".exe)";
-                _btnMasterToggle.Text = "MOD: ACTIVO (F1)";
+                _lblStatusText.Text = Localization.T("ACTIVE in ", "ACTIVO en ") + _engine.ActiveGame.DisplayName + " (" + _engine.ActiveProcessName + ".exe)";
+                _btnMasterToggle.Text = Localization.T("MOD: ACTIVE (F1)", "MOD: ACTIVO (F1)");
                 _btnMasterToggle.BackColor = AccentGreen;
             }
             else if (_engine.TestModeActive)
             {
                 _lblStatusDot.ForeColor = AccentBlue;
-                _lblStatusText.Text = "MODO PRUEBA LOCAL ACTIVO (sin enviar teclas reales a Windows)";
-                _btnMasterToggle.Text = "MOD: ACTIVO (F1)";
+                _lblStatusText.Text = Localization.T(
+                    "LOCAL TEST MODE ACTIVE (no real keystrokes sent to Windows)",
+                    "MODO PRUEBA LOCAL ACTIVO (sin enviar teclas reales a Windows)");
+                _btnMasterToggle.Text = Localization.T("MOD: ACTIVE (F1)", "MOD: ACTIVO (F1)");
                 _btnMasterToggle.BackColor = AccentGreen;
             }
             else
             {
                 _lblStatusDot.ForeColor = AccentAmber;
-                _lblStatusText.Text = "En espera — Abre DMC4, DMC4SE o DMC HD Collection (DMC1/2/3)";
-                _btnMasterToggle.Text = "MOD: ACTIVO (F1)";
+                _lblStatusText.Text = Localization.T(
+                    "Waiting — Launch DMC4, DMC4SE or DMC HD Collection (DMC1/2/3)",
+                    "En espera — Abre DMC4, DMC4SE o DMC HD Collection (DMC1/2/3)");
+                _btnMasterToggle.Text = Localization.T("MOD: ACTIVE (F1)", "MOD: ACTIVO (F1)");
                 _btnMasterToggle.BackColor = AccentGreen;
             }
 
             _lblAdminWarning.Visible = _engine.ActiveGameIsElevatedMismatch;
 
-            // Preset switch buttons
             bool isDmc5 = _config.ActivePreset == PresetType.Dmc5Style;
             _btnPresetDmc5.BackColor = isDmc5 ? AccentCrimson : BgInput;
             _btnPresetDmc5.FlatAppearance.BorderColor = isDmc5 ? AccentCrimsonHover : BorderColor;
@@ -1018,10 +1156,12 @@ namespace DmcKbmMod
         private void BuildTrayIcon()
         {
             var menu = new ContextMenuStrip();
-            _trayToggleItem = new ToolStripMenuItem("Mod Activado (F1)", null, (s, e) => _engine.SetModEnabled(!_engine.ModEnabled, true));
-            _trayPresetDmc5Item = new ToolStripMenuItem("Esquema: Estilo DMC5", null, (s, e) => { _engine.SetPreset(PresetType.Dmc5Style, true); SaveConfigSafe(); });
-            _trayPresetClassicItem = new ToolStripMenuItem("Esquema: Estilo Clásico", null, (s, e) => { _engine.SetPreset(PresetType.ClassicStyle, true); SaveConfigSafe(); });
-            _trayCameraItem = new ToolStripMenuItem("Cámara con Ratón (F3)", null, (s, e) => { _engine.ToggleMouseCamera(true); SaveConfigSafe(); });
+            _trayToggleItem = new ToolStripMenuItem("", null, (s, e) => _engine.SetModEnabled(!_engine.ModEnabled, true));
+            _trayPresetDmc5Item = new ToolStripMenuItem("", null, (s, e) => { _engine.SetPreset(PresetType.Dmc5Style, true); SaveConfigSafe(); });
+            _trayPresetClassicItem = new ToolStripMenuItem("", null, (s, e) => { _engine.SetPreset(PresetType.ClassicStyle, true); SaveConfigSafe(); });
+            _trayCameraItem = new ToolStripMenuItem("", null, (s, e) => { _engine.ToggleMouseCamera(true); SaveConfigSafe(); });
+            _trayOpenItem = new ToolStripMenuItem("", null, (s, e) => RestoreFromTray());
+            _trayExitItem = new ToolStripMenuItem("", null, (s, e) => { _forceClose = true; Close(); });
 
             menu.Items.Add(_trayToggleItem);
             menu.Items.Add(new ToolStripSeparator());
@@ -1029,8 +1169,8 @@ namespace DmcKbmMod
             menu.Items.Add(_trayPresetClassicItem);
             menu.Items.Add(_trayCameraItem);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("Abrir Ventana", null, (s, e) => RestoreFromTray());
-            menu.Items.Add("Salir", null, (s, e) => { _forceClose = true; Close(); });
+            menu.Items.Add(_trayOpenItem);
+            menu.Items.Add(_trayExitItem);
 
             _trayIcon = new NotifyIcon
             {
@@ -1049,7 +1189,7 @@ namespace DmcKbmMod
             _trayPresetDmc5Item.Checked = _config.ActivePreset == PresetType.Dmc5Style;
             _trayPresetClassicItem.Checked = _config.ActivePreset == PresetType.ClassicStyle;
             _trayCameraItem.Checked = _config.MouseCameraMasterEnabled;
-            _trayIcon.Text = "DMC KBM Mod — " + (_engine.ModEnabled ? InputEngine.GetPresetDisplayName(_config.ActivePreset) : "Pausado");
+            _trayIcon.Text = "DMC KBM Mod — " + (_engine.ModEnabled ? InputEngine.GetPresetDisplayName(_config.ActivePreset) : Localization.T("Paused", "Pausado"));
         }
 
         private void RestoreFromTray()

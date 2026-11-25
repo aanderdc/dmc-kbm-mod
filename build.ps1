@@ -10,6 +10,7 @@ if (-not (Test-Path $csc)) {
 $outExe = Join-Path $projectDir "DMC_KBM_Mod.exe"
 $sources = @(
     (Join-Path $projectDir "src\NativeInput.cs"),
+    (Join-Path $projectDir "src\Localization.cs"),
     (Join-Path $projectDir "src\ConfigModel.cs"),
     (Join-Path $projectDir "src\InputEngine.cs"),
     (Join-Path $projectDir "src\OverlayToast.cs"),
